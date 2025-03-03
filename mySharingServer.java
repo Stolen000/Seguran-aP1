@@ -21,13 +21,25 @@ public class mySharingServer{
 	public static void main(String[] args) {
 		System.out.println("servidor: main");
 		mySharingServer server = new mySharingServer();
-		server.startServer();
+		int port = -1;
+		
+		if (args.length > 0){
+			try {
+				port = Integer.parseInt(args[0]);
+			} catch(NumberFormatException e){
+				System.out.println("Porto não é um número válido");
+				return;
+			}
+		}
+		
+		server.startServer(port);
 	}
 
-	public void startServer (){
+	public void startServer (int port){
+		int finalPort = (port != -1) ? port : 1234;
 		ServerSocket sSoc = null;
-		try {
-			sSoc = new ServerSocket(12345);
+		try{
+			sSoc = new ServerSocket(finalPort);			
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 			System.exit(-1);

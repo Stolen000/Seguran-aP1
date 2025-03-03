@@ -66,87 +66,218 @@ public class mySharingServer{
 
                 String user = null;
 				String passwd = null;
-                try {
-					user = (String)inStream.readObject();
-					System.out.print("User:");
-					System.out.println(user);
-					passwd = (String)inStream.readObject();
-					System.out.print("Pass:");
-					System.out.println(passwd);
-					System.out.println("thread: depois de receber a password e o user");
-				}catch (ClassNotFoundException e1) {
-					e1.printStackTrace();
-				}
-                //------------------------
+				boolean autentificado = false;
+				boolean encontrouUser;
 
-
-                //Authentification
-				//AUTENTIFICAÇÂO //Se for invalido ficar á espera de novo input!! (do while) ou while
-				if (user.length() != 0 && passwd.length() != 0){									
-					boolean escritaFeita = false;
-					StringBuilder sb = new StringBuilder();
-					File db = new File("users.txt");
+				//file dos users com passwords
+				File db = new File("users.txt");
 					if (!db.exists()) {
 						db.createNewFile();
 					}
-					
-					//-------
-					Scanner sc = new Scanner(db);
-					// Ficheiro user.txt vazio
-					if (!sc.hasNextLine()) {
-						System.out.println("Arquivo vazio, adicionando primeira entrada...");
-						sb.append(user).append(":").append(passwd).append(System.lineSeparator());
-						try (FileWriter writer = new FileWriter(db)) {
-							writer.write(sb.toString());
-						}
-						outStream.writeObject("OK-NEW-USER");
-						receiveFile(inStream, user);
-					} else {
-						while (sc.hasNextLine() && !escritaFeita) {
-							String linha = sc.nextLine();
-							if (linha.contains(":")) {
-								String[] parts = linha.split(":", 2);
-								if (parts.length == 2) {
-									String username = parts[0].trim();
-									String password = parts[1].trim();
-									
-									if (username.equals(user)) {
-										outStream.writeObject(password.equals(passwd) ? "OK-USER" : "WRONG-PWD"); //User encontrado : Invalido
-										if (password.equals(passwd)) sendFile(outStream, user);
-										escritaFeita = true;
-									}
-								}
-							}
-						}
-						if (!escritaFeita) {
+
+
+				while(!autentificado){
+
+				
+				
+					try {
+						user = (String)inStream.readObject();
+						System.out.print("User:");
+						System.out.println(user);
+						passwd = (String)inStream.readObject();
+						System.out.print("Pass:");
+						System.out.println(passwd);
+						System.out.println("thread: depois de receber a password e o user");
+					}catch (ClassNotFoundException e1) {
+						e1.printStackTrace();
+					}
+					//------------------------
+
+
+					//Authentification ---------------------------------------------------------------------------------vv
+					//AUTENTIFICAÇÂO //Se for invalido ficar á espera de novo input!! (do while) ou while
+					if (user.length() != 0 && passwd.length() != 0){									
+						encontrouUser = false;
+						StringBuilder sb = new StringBuilder();
+						
+						
+						//-------
+						Scanner sc = new Scanner(db);
+						// Ficheiro user.txt vazio
+						if (!sc.hasNextLine()) {
+							System.out.println("Arquivo vazio, adicionando primeira entrada...");
 							sb.append(user).append(":").append(passwd).append(System.lineSeparator());
-							try (FileWriter writer = new FileWriter(db, true)) {
+							try (FileWriter writer = new FileWriter(db)) {
 								writer.write(sb.toString());
 							}
-							outStream.writeObject("OK-NEW-USER"); // User novo
-							receiveFile(inStream, user);
-						}
-					}
-		
-					sc.close();
+							outStream.writeObject("OK-NEW-USER");
+							autentificado = true;
+							
 
-				} else {
-					outStream.writeObject(new String("WRONG-PWD")); // Invalid
+						} else {
+							while (sc.hasNextLine() && !encontrouUser) {
+								String linha = sc.nextLine();
+								if (linha.contains(":")) {
+									String[] parts = linha.split(":", 2);
+									if (parts.length == 2) {
+										String username = parts[0].trim();
+										String password = parts[1].trim();
+										
+										if (username.equals(user)) {
+											if(password.equals(passwd)){
+												outStream.writeObject("OK-USER"); //User encontrado
+												autentificado = true;
+											} else {
+												outStream.writeObject("WRONG-PWD"); //Invalido
+											}
+											 
+											encontrouUser = true;
+										}
+									}
+								}
+
+								//-------Codigo que pode substituir o de cima, porém um pouco menos "seguro" ja que so checka por ":" mas nao quantos :(
+								
+								//if(linha.startsWith(user + ":")){
+								//	outStream.writeObject(linha.trim().contains(":" + passwd) ? "OK-USER" : "WRONG-PWD"); //User encontrado : Invalido
+								//			encontrouUser = true;
+								//}
+							}
+							if (!encontrouUser) {
+								sb.append(user).append(":").append(passwd).append(System.lineSeparator());
+								try (FileWriter writer = new FileWriter(db, true)) {
+									writer.write(sb.toString());
+								}
+								outStream.writeObject("OK-NEW-USER"); // User novo
+								autentificado = true;
+							}
+						}
+			
+						sc.close();
+
+					} else {
+						outStream.writeObject(new String("WRONG-PWD")); // Invalid
+					}
 				}
+				//Authentification ---------------------------------------------------------------------------------^^
 
 			//Servidor tem que manter estruturas de dados com os dados dos users??
 
-			//Tem que ser implementada o ficheiro para guardar os workplaces
+			//------------------------------------------------v
+				while (true) {
+					//Servidor espera pelo commando do cliente
+					String comandoDoCliente = (String) inStream.readObject();
+					String[] arrayDeArgumentos = comandoDoCliente.trim().split(" ");
+					String comando = arrayDeArgumentos[0];
+					boolean foundWS = false;
+
+					File workspaceFile = new File("worksapces.txt");
+							if (!workspaceFile.exists()) {
+								workspaceFile.createNewFile();
+							}
+
+					switch (comando) {
+						//CREATE <ws>
+						case "CREATE":
+							//Checkar se <ws> já existe ou n
+							Scanner sc = new Scanner(workspaceFile);
+							StringBuilder sbc = new StringBuilder();
+							String linhaDoFile;
+							//ficheiro novo/vazio
+							if(!sc.hasNextLine()){
+								System.out.println("ws file vazio, adicionando primeiro workspace...");
+								sbc.append(arrayDeArgumentos[1]).append(":").append(user)
+																.append(">").append(user)
+																.append(System.lineSeparator());
+								try (FileWriter writer = new FileWriter(workspaceFile)) {
+									writer.write(sbc.toString());
+								}
+								outStream.writeObject("OK");
+								break;
+							} else {
+								while (sc.hasNextLine()) {
+									linhaDoFile = sc.nextLine();
+									//Encontrou um workspace com esse nome
+									if (linhaDoFile.startsWith(arrayDeArgumentos[1] + ":")) {
+										outStream.writeObject("NOK");
+										foundWS = true;
+										break;
+									}
+								}
+								if(foundWS){
+									break;
+								}
+								//System.out.println("Didnt find a ws com o nome dado (sucesso)");
+
+								//Podemos abstrair este append grande, assim como o append da autentificacao --vv
+								sbc.append(arrayDeArgumentos[1]).append(":").append(user)
+																.append(">").append(user)
+																.append(System.lineSeparator());
+								try (FileWriter writer = new FileWriter(workspaceFile, true)) {
+									writer.write(sbc.toString());
+								}
+								outStream.writeObject("OK");
+								break;
+							}
+							//FORMAT for <ws> FILE : <ws>:<owner> ><user>,<user>,...
+							
+						//ADD <user1> <ws>
+						case "ADD":
+							
+							
+							break;
+							
 
 
-                //Closing Stuff
-                outStream.close();
-                inStream.close();
+						//UP <ws> <file1> ... <filen>
+						case "UP":
+							if(arrayDeArgumentos.length >= 3){
+								File ficheiroAtual;
+								for (int i = 2; i < arrayDeArgumentos.length; i++) {
+									ficheiroAtual = new File(arrayDeArgumentos[i]) ;
+									if(!ficheiroAtual.exists()){
+										//Mandar um sinal ao serv?
+										//TODO Resto desta logica
 
-                socket.close();
+									}
+									
+									//Mandamos o comando por completo primeiro ao server para ele se perparar e dps começamos a mandar?
+									//Podemos mandar o comando + quantos ficheiros tentaremos (o length - 2) e dps o processo comeca?? 
+								}
+								break;
+							}        
+													
+						case "DW":
+			
+							break;  
+						case "RM":
+							break;
+						
+						case "LW":
+							break;
+						
+						case "LS":
+							break;
+						default:
+							System.out.println("Comando invalido, tente novamente.");
+					}
+				}
+
+
+				//Envia de volta a resposta depois das ops
+				//------------------------------------------------^
+
+				//Tem que ser implementada o ficheiro para guardar os workplaces
+
+
+				//Closing Stuff
+				//outStream.close();
+				//inStream.close();
+
+				//socket.close();
                 
                 
-            } catch (IOException e) {
+            } catch (IOException | ClassNotFoundException e) {
 				e.printStackTrace();
 			}
 

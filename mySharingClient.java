@@ -16,7 +16,7 @@ import java.util.Scanner;
 
 
 public class mySharingClient {
-    public static void main(String[] args){
+    public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException{
         System.out.println("cliente : main");
         //Open socket
         Socket clientSocket = new Socket("localhost", 12345);
@@ -26,15 +26,19 @@ public class mySharingClient {
 
        
         boolean respostaInvalida = true;
-       
+        String userInputUser;
+        String userInputPassword;
+        String respostaAutentificacao = "";
+
+        Scanner scanner = new Scanner(System.in);
+
         while (respostaInvalida) {
             
         
             //----------Guardar: UserID Password
             
-
-            String userInputUser = "UserD";
-            String userInputPassword = "Password3";
+            userInputUser = "UserD";
+            userInputPassword = "Password3";
             
             //System.out.print("User:_ ");
             //String userInputUser = scanner.nextLine();
@@ -52,7 +56,7 @@ public class mySharingClient {
             //
 
             //-----------------Se autentificado corretamente: OK-USER || Se novo user: OK-NEW-USER
-            String respostaAutentificacao = (String) in.readObject();   
+            respostaAutentificacao = (String) inputStream.readObject();   
             respostaInvalida = respostaAutentificacao.equals("WRONG-PWD");
             if (respostaInvalida) {
                 System.out.println("Resposta Invalida, tente novamente: ");
@@ -70,27 +74,20 @@ public class mySharingClient {
             String comando;
             String[] arrayDeArgumentos;
 
+
+            printMenuDeOperacoes();
             //Loop das operações
             while (true) {
                 //Menu das operacoes
-                StringBuilder sb =  new StringBuilder("Menu:\n").append("CREATE <ws> # Criar um novo workspace - utilizador é Owner.\n")
-                                                                .append("ADD <user1> <ws> # Adicionar utilizador <user1> ao workspace <ws>." 
-                                                                + "A operação ADD só funciona se o utilizador for o Owner do workspace <ws>.\n")
-                                                                .append("UP <ws> <file1> ... <filen> # Adicionar ficheiros ao workspace.\n" )
-                                                                .append("DW <ws> <file1> ... <filen> # Download de ficheiros do workspace para"
-                                                                    + "a máquina local.\n")
-                                                                .append("RM <ws> <file1> ... <filen> # Apagar ficheiros do workspace.\n")
-                                                                .append("LW # Lista os workspaces associados ao utilizador.\n")
-                                                                .append("LS <ws> # Lista os ficheiros dentro de um workspace.");
-                System.out.println(sb.toString());
+               
 
                 //------------------v Input do comando do user
-                inputDoUser = new String("CREATE workspace004");
+                //inputDoUser = new String("CREATE workspace004");
 
 
-                //System.out.print("Comando: ");
-                //inputDoUser = scanner.nextLine();
-
+                System.out.print("Comando: ");
+                inputDoUser = scanner.nextLine();
+                System.out.println();
                 //In progress:Tratar input
                 arrayDeArgumentos = inputDoUser.trim().split(" ");
                 comando = arrayDeArgumentos[0];
@@ -100,6 +97,7 @@ public class mySharingClient {
                     case "CREATE":
                         if(arrayDeArgumentos.length == 2){
                             sendAndReceive(inputStream, outputStream, inputDoUser);
+                            
                             break;
                         } 
                         //se nao entrar no if ele cai no default
@@ -142,8 +140,12 @@ public class mySharingClient {
                     
                     case "LS":
                         break;
+                    case "HELP":
+                        printMenuDeOperacoes();
+                        break;
                     default:
                         System.out.println("Comando invalido, tente novamente.");
+                        printMenuDeOperacoes();
                 }
 
                 //------------------^
@@ -168,11 +170,25 @@ public class mySharingClient {
 
 
 
+        scanner.close();
 
         inputStream.close();
         outputStream.close();
         //----
         clientSocket.close();
+    }
+
+    private static void printMenuDeOperacoes() {
+        StringBuilder sb =  new StringBuilder("Menu:\n").append("CREATE <ws> # Criar um novo workspace - utilizador é Owner.\n")
+                                                        .append("ADD <user1> <ws> # Adicionar utilizador <user1> ao workspace <ws>." 
+                                                        + "A operação ADD só funciona se o utilizador for o Owner do workspace <ws>.\n")
+                                                        .append("UP <ws> <file1> ... <filen> # Adicionar ficheiros ao workspace.\n" )
+                                                        .append("DW <ws> <file1> ... <filen> # Download de ficheiros do workspace para"
+                                                            + "a máquina local.\n")
+                                                        .append("RM <ws> <file1> ... <filen> # Apagar ficheiros do workspace.\n")
+                                                        .append("LW # Lista os workspaces associados ao utilizador.\n")
+                                                        .append("LS <ws> # Lista os ficheiros dentro de um workspace.");
+        System.out.println(sb.toString());
     }
 
     private static void sendAndReceive(ObjectInputStream inputStream, ObjectOutputStream outputStream, String inputDoUser)
@@ -182,6 +198,6 @@ public class mySharingClient {
 
         respostaDoServidor = (String) inputStream.readObject();
 
-        System.out.print("Resposta: " + respostaDoServidor);
+        System.out.println("Resposta: " + respostaDoServidor + "\n");
     }
 }

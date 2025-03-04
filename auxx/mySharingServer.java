@@ -5,6 +5,7 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 
@@ -82,8 +83,8 @@ public class mySharingServer{
 
                 String user = null;
 				String passwd = null;
-				boolean autentificado = false;
-				boolean encontrouUser;
+				
+				
 
 				//file dos users com passwords
 				File db = new File("users.txt");
@@ -91,92 +92,8 @@ public class mySharingServer{
 						db.createNewFile();
 					}
 
-
-				while(!autentificado){
-
+				boolean encontrouUser = authentification(user, passwd, outStream, inStream, false, db);
 				
-				
-					try {
-						user = (String)inStream.readObject();
-						//System.out.print("User:");
-						//System.out.println(user);
-						passwd = (String)inStream.readObject();
-						//System.out.print("Pass:");
-						//System.out.println(passwd);
-						System.out.println("thread: depois de receber a password e o user");
-					}catch (ClassNotFoundException e1) {
-						e1.printStackTrace();
-					}
-					//------------------------
-
-
-					//Authentification ---------------------------------------------------------------------------------vv
-					//AUTENTIFICAÇÂO //Se for invalido ficar á espera de novo input!! (do while) ou while
-					if (user.length() != 0 && passwd.length() != 0){									
-						encontrouUser = false;
-						StringBuilder sb = new StringBuilder();
-						
-						
-						//-------
-						Scanner sc = new Scanner(db);
-						// Ficheiro user.txt vazio
-						if (!sc.hasNextLine()) {
-							System.out.println("Arquivo vazio, adicionando primeira entrada...");
-							sb.append(user).append(":").append(passwd).append(System.lineSeparator());
-							try (FileWriter writer = new FileWriter(db)) {
-								writer.write(sb.toString());
-							}
-							outStream.writeObject("OK-NEW-USER");
-							autentificado = true;
-							
-
-						} else {
-							while (sc.hasNextLine() && !encontrouUser) {
-								String linha = sc.nextLine();
-								if (linha.contains(":")) {
-									String[] parts = linha.split(":", 2);
-									if (parts.length == 2) {
-										String username = parts[0].trim();
-										String password = parts[1].trim();
-										
-										if (username.equals(user)) {
-											if(password.equals(passwd)){
-												outStream.writeObject("OK-USER"); //User encontrado
-												autentificado = true;
-											} else {
-												outStream.writeObject("WRONG-PWD"); //Invalido
-											}
-											 
-											encontrouUser = true;
-										}
-									}
-								}
-
-								//-------Codigo que pode substituir o de cima, porém um pouco menos "seguro" ja que so checka por ":" mas nao quantos :(
-								
-								//if(linha.startsWith(user + ":")){
-								//	outStream.writeObject(linha.trim().contains(":" + passwd) ? "OK-USER" : "WRONG-PWD"); //User encontrado : Invalido
-								//			encontrouUser = true;
-								//}
-							}
-							if (!encontrouUser) {
-								sb.append(user).append(":").append(passwd).append(System.lineSeparator());
-								try (FileWriter writer = new FileWriter(db, true)) {
-									writer.write(sb.toString());
-								}
-								outStream.writeObject("OK-NEW-USER"); // User novo
-								autentificado = true;
-							}
-						}
-			
-						sc.close();
-
-					} else {
-						outStream.writeObject(new String("WRONG-PWD")); // Invalid
-					}
-				}
-				//Authentification ---------------------------------------------------------------------------------^^
-
 			//Servidor tem que manter estruturas de dados com os dados dos users??
 
 			//------------------------------------------------v
@@ -395,5 +312,97 @@ public class mySharingServer{
 
             
         }
+
+		private boolean authentification(String user, String passwd, ObjectOutputStream outStream, ObjectInputStream inStream, boolean findUser, File db) throws ClassNotFoundException{
+			boolean encontrouUser = findUser;
+			boolean autentificado = false;
+			while(!autentificado){
+
+				try {
+					user = (String)inStream.readObject();
+					//System.out.print("User:");
+					//System.out.println(user);
+					passwd = (String)inStream.readObject();
+					//System.out.print("Pass:");
+					//System.out.println(passwd);
+					System.out.println("thread: depois de receber a password e o user");
+				}catch (ClassNotFoundException | IOException e) {
+					e.printStackTrace();
+				}
+				//------------------------
+
+
+				//Authentification ---------------------------------------------------------------------------------vv
+				//AUTENTIFICAÇÂO //Se for invalido ficar á espera de novo input!! (do while) ou while
+				try{
+					if (user.length() != 0 && passwd.length() != 0){									
+						encontrouUser = false;
+						StringBuilder sb = new StringBuilder();
+						
+						
+						//-------
+						Scanner sc = new Scanner(db);
+						// Ficheiro user.txt vazio
+						if (!sc.hasNextLine()) {
+							System.out.println("Arquivo vazio, adicionando primeira entrada...");
+							sb.append(user).append(":").append(passwd).append(System.lineSeparator());
+							try (FileWriter writer = new FileWriter(db)) {
+								writer.write(sb.toString());
+							}
+							outStream.writeObject("OK-NEW-USER");
+							autentificado = true;
+							
+
+						} else {
+							while (sc.hasNextLine() && !encontrouUser) {
+								String linha = sc.nextLine();
+								if (linha.contains(":")) {
+									String[] parts = linha.split(":", 2);
+									if (parts.length == 2) {
+										String username = parts[0].trim();
+										String password = parts[1].trim();
+										
+										if (username.equals(user)) {
+											if(password.equals(passwd)){
+												outStream.writeObject("OK-USER"); //User encontrado
+												autentificado = true;
+											} else {
+												outStream.writeObject("WRONG-PWD"); //Invalido
+											}
+											
+											encontrouUser = true;
+										}
+									}
+								}
+
+								//-------Codigo que pode substituir o de cima, porém um pouco menos "seguro" ja que so checka por ":" mas nao quantos :(
+								
+								//if(linha.startsWith(user + ":")){
+								//	outStream.writeObject(linha.trim().contains(":" + passwd) ? "OK-USER" : "WRONG-PWD"); //User encontrado : Invalido
+								//			encontrouUser = true;
+								//}
+							}
+							if (!encontrouUser) {
+								sb.append(user).append(":").append(passwd).append(System.lineSeparator());
+								try (FileWriter writer = new FileWriter(db, true)) {
+									writer.write(sb.toString());
+								}
+								outStream.writeObject("OK-NEW-USER"); // User novo
+								autentificado = true;
+							}
+						}
+			
+						sc.close();
+
+					} else {
+						outStream.writeObject(new String("WRONG-PWD")); // Invalid
+					}
+				}catch(IOException e){
+					e.printStackTrace();
+				}
+			}
+
+			return encontrouUser;
+		}
     }
 }

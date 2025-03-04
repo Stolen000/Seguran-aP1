@@ -43,14 +43,15 @@ public class mySharingClient {
         String respostaAutentificacao = "";
 
         Scanner scanner = new Scanner(System.in);
+        userInputUser = user_id;
+        userInputPassword = password;
 
         while (respostaInvalida) {
             
         
             //----------Guardar: UserID Password
             
-            userInputUser = user_id;
-            userInputPassword = password;
+
             
             //System.out.print("User:_ ");
             //String userInputUser = scanner.nextLine();
@@ -71,7 +72,15 @@ public class mySharingClient {
             respostaAutentificacao = (String) inputStream.readObject();   
             respostaInvalida = respostaAutentificacao.equals("WRONG-PWD");
             if (respostaInvalida) {
-                System.out.println("Resposta Invalida, tente novamente: ");
+
+                //Fica a repetir o processo até introduzir a password correta ou um novo user e pass
+                System.out.print("Resposta Invalida, tente novamente (eg: Alberto:benfica): ");
+                String input = scanner.nextLine();
+                String[] credentials = input.split(":");
+                userInputUser = credentials[0];
+                userInputPassword = credentials[1];
+                //System.out.println("Voce digitou: " + input);
+
             }
         }
 

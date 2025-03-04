@@ -93,6 +93,8 @@ public class mySharingServer{
 					}
 
 				boolean encontrouUser = authentification(user, passwd, outStream, inStream, false, db);
+
+				System.out.println(user);
 				
 			//Servidor tem que manter estruturas de dados com os dados dos users??
 
@@ -104,7 +106,7 @@ public class mySharingServer{
 					String comando = arrayDeArgumentos[0];
 					boolean foundWS = false;
 
-					File workspaceFile = new File("worksapces.txt");
+					File workspaceFile = new File("workspaces.txt");
 							if (!workspaceFile.exists()) {
 								workspaceFile.createNewFile();
 							}
@@ -156,91 +158,24 @@ public class mySharingServer{
 							
 						//ADD <user1> <ws>
 						case "ADD":
-							Scanner sc1 = new Scanner(db);
-							String linhaDoFile1;
-							boolean foundWs1 = false;
-							String userFound = "";
 							//procurar o user
-							encontrouUser = false;
 							// Ficheiro user.txt vazio
-							if (!sc1.hasNextLine()) {
+							if (db.length() == 0) {
 								outStream.writeObject("NOUSER");
-							} else {
-								while (sc1.hasNextLine() && !encontrouUser) {
-									String linha = sc1.nextLine();
-									if (linha.contains(":")) {
-										String[] parts = linha.split(":", 2);
-										if (parts.length == 2) {
-											String username = parts[0].trim();
-											if (username.equals(arrayDeArgumentos[1])) {
-												encontrouUser = true;
-												System.out.println(username);
-												userFound = username;
-												break;
-											}
-										}
-									}
-								}
-								if(!encontrouUser){
-									outStream.writeObject("NOUSER");
-									break;
-								}
+								break;
+							} 
+							//User nao existe
+							if(!findUser(user)){
+								outStream.writeObject("NOUSER");
+								break;
 							}
-							sc1.close();
-
+							
 							//procurar o ws e vê se o user é o owner
 							//----------------------Checkar se <ws> já existe ou n
-
-							sc1 = new Scanner(workspaceFile);
-							File tempFile = new File("temp.txt");
-							PrintWriter writer = new PrintWriter(new FileWriter(tempFile));
-
-							//ficheiro novo/vazio
-							if(!sc1.hasNextLine()){
-								outStream.writeObject("NOWS"); //nao existe ws
-								sc1.close();
-								break;
-							} else {
-								while (sc1.hasNextLine()) {
-									linhaDoFile1 = sc1.nextLine();
-									//Encontrou um workspace com esse nome
-									System.out.println(arrayDeArgumentos[2]);
-									if (linhaDoFile1.startsWith(arrayDeArgumentos[2] + ":")) {
-										foundWs1 = true;
-										if(!linhaDoFile1.startsWith(arrayDeArgumentos[2] + ":" + user)){
-											//O user não é owner
-											System.out.println(arrayDeArgumentos[2] + ":" + user);
-											outStream.writeObject("NOPERM");
-										} else {
-											//É o owner ent faz a add do user
-											linhaDoFile1 += ", " + userFound;
-										}
-										
-									}
-									writer.println(linhaDoFile1);
-								}
-								writer.close();
-								
-								if(!foundWs1){
-									//Nao encontrou o workspace
-									outStream.writeObject("NOWS");
-									sc1.close();
-									break;
-								}
-								sc1.close();
-
-								if (workspaceFile.delete()) {
-									tempFile.renameTo(workspaceFile);
-									outStream.writeObject("OK");
-								}else {
-									System.out.println("Something went wrong! 311");
-								}
-								
-							}
-							
+							outStream.writeObject(metodoADD(arrayDeArgumentos[2], arrayDeArgumentos[1], user));
 							
 							//-----------------------------
-							
+							break;
 							
 							//-----------------------------
 							//Ver se user é owner do ws
@@ -253,7 +188,7 @@ public class mySharingServer{
 							//ws n existe : NOWS
 							//user nao existe : NOUSER
 							
-							break;
+							
 							
 
 
@@ -285,6 +220,7 @@ public class mySharingServer{
 							break;
 						
 						case "LS":
+							
 							break;
 						default:
 							System.out.println("Comando invalido, tente novamente.");
@@ -320,11 +256,10 @@ public class mySharingServer{
 
 				try {
 					user = (String)inStream.readObject();
-					//System.out.print("User:");
-					//System.out.println(user);
+					System.out.print("User:" + user);
 					passwd = (String)inStream.readObject();
-					//System.out.print("Pass:");
-					//System.out.println(passwd);
+					System.out.print("Pass:" + passwd);
+
 					System.out.println("thread: depois de receber a password e o user");
 				}catch (ClassNotFoundException | IOException e) {
 					e.printStackTrace();
@@ -404,5 +339,94 @@ public class mySharingServer{
 
 			return encontrouUser;
 		}
-    }
+
+
+		//Encontra user no ficheiro user.txt
+		//Returns true se encontrou, falso caso contrario
+		private boolean findUser(String userToFind){
+			Scanner scanner = new Scanner("users.txt");
+			String linha;
+			String[] parts;
+			while (scanner.hasNextLine()) {
+				linha = scanner.nextLine();
+				if (linha.contains(":")) {
+					parts = linha.split(":", 2);
+					if (parts.length == 2 && parts[0].trim().equals(userToFind)) {
+						scanner.close();
+						return true;
+					}
+				}
+				else{
+					System.err.println("users.txt formato incorreto!");
+				}
+			}
+			scanner.close();
+			return false; 
+		}
+
+		private String findWorkspace(String workspaceToFind){
+			Scanner scanner = new Scanner("workspaces.txt");
+			String linha;
+			while (scanner.hasNextLine()) {
+				linha = scanner.nextLine();
+				//Encontrou um workspace com esse nome
+				if (linha.startsWith(workspaceToFind + ":")) {
+					//Encontrou ja o ws
+					scanner.close();
+					return linha;
+
+				}
+			}
+			scanner.close();
+			return "-1";
+		}
+    
+
+		//Metodo do ADD, retorna o output para mandar ao servidor
+		//NOPERM se user nao for owner do ws
+		//NOWS se nao existir o ws
+		//Retorna OK se sucesso
+		private String metodoADD(String workspace, String userToAdd, String user) throws IOException{
+			boolean foundAndOwner = false;
+			Scanner scanner = new Scanner("workspaces.txt");
+			File tempFile = new File("temp.txt");
+			PrintWriter writer = new PrintWriter(new FileWriter(tempFile));
+			String linha;
+			File wsFile = new File("workspaces.txt");
+
+			while (scanner.hasNextLine()) {
+				linha = scanner.nextLine();
+				//Encontrou um workspace com esse nome
+				if (linha.startsWith(workspace + ":")) {
+					if(!linha.startsWith(workspace + ":" + user)){
+						//O user não é owner
+						return "NOPERM";
+					} else {
+						//É o owner ent faz a add do user
+						linha += ", " + userToAdd;
+						foundAndOwner = true;
+					}
+				}
+				writer.println(linha);
+			}
+			writer.close();
+
+			if(foundAndOwner){
+				linha = "OK";
+			} else{
+				linha = "NOWS";
+			}		
+
+			if (linha.equals("OK")) {
+				if(wsFile.delete()){
+					tempFile.renameTo(wsFile);
+				} else {
+					System.out.println("Something went wrong! 311");
+				}
+				
+			}
+
+			return linha;
+		}
+	}
 }

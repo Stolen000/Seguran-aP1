@@ -94,7 +94,7 @@ public class mySharingServer{
 						db.createNewFile();
 					}
 
-				boolean encontrouUser = authentification(user, passwd, outStream, inStream, false, db);
+				boolean encontrouUser = authentification(outStream, inStream, false, db);
 
 				System.out.println(user);
 				

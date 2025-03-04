@@ -11,6 +11,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
@@ -40,7 +42,7 @@ public class mySharingServer{
 		int finalPort = (port != -1) ? port : 12345;
 		ServerSocket sSoc = null;
 		try{
-			System.err.println(finalPort);
+			//System.err.println(finalPort);
 			sSoc = new ServerSocket(finalPort);			
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
@@ -96,11 +98,11 @@ public class mySharingServer{
 				
 					try {
 						user = (String)inStream.readObject();
-						System.out.print("User:");
-						System.out.println(user);
+						//System.out.print("User:");
+						//System.out.println(user);
 						passwd = (String)inStream.readObject();
-						System.out.print("Pass:");
-						System.out.println(passwd);
+						//System.out.print("Pass:");
+						//System.out.println(passwd);
 						System.out.println("thread: depois de receber a password e o user");
 					}catch (ClassNotFoundException e1) {
 						e1.printStackTrace();
@@ -237,7 +239,102 @@ public class mySharingServer{
 							
 						//ADD <user1> <ws>
 						case "ADD":
+							Scanner sc1 = new Scanner(db);
+							String linhaDoFile1;
+							boolean foundWs1 = false;
+							String userFound = "";
+							//procurar o user
+							encontrouUser = false;
+							// Ficheiro user.txt vazio
+							if (!sc1.hasNextLine()) {
+								outStream.writeObject("NOUSER");
+							} else {
+								while (sc1.hasNextLine() && !encontrouUser) {
+									String linha = sc1.nextLine();
+									if (linha.contains(":")) {
+										String[] parts = linha.split(":", 2);
+										if (parts.length == 2) {
+											String username = parts[0].trim();
+											if (username.equals(arrayDeArgumentos[1])) {
+												encontrouUser = true;
+												System.out.println(username);
+												userFound = username;
+												break;
+											}
+										}
+									}
+								}
+								if(!encontrouUser){
+									outStream.writeObject("NOUSER");
+									break;
+								}
+							}
+							sc1.close();
+
+							//procurar o ws e vê se o user é o owner
+							//----------------------Checkar se <ws> já existe ou n
+
+							sc1 = new Scanner(workspaceFile);
+							File tempFile = new File("temp.txt");
+							PrintWriter writer = new PrintWriter(new FileWriter(tempFile));
+
+							//ficheiro novo/vazio
+							if(!sc1.hasNextLine()){
+								outStream.writeObject("NOWS"); //nao existe ws
+								sc1.close();
+								break;
+							} else {
+								while (sc1.hasNextLine()) {
+									linhaDoFile1 = sc1.nextLine();
+									//Encontrou um workspace com esse nome
+									System.out.println(arrayDeArgumentos[2]);
+									if (linhaDoFile1.startsWith(arrayDeArgumentos[2] + ":")) {
+										foundWs1 = true;
+										if(!linhaDoFile1.startsWith(arrayDeArgumentos[2] + ":" + user)){
+											//O user não é owner
+											System.out.println(arrayDeArgumentos[2] + ":" + user);
+											outStream.writeObject("NOPERM");
+										} else {
+											//É o owner ent faz a add do user
+											linhaDoFile1 += ", " + userFound;
+										}
+										
+									}
+									writer.println(linhaDoFile1);
+								}
+								writer.close();
+								
+								if(!foundWs1){
+									//Nao encontrou o workspace
+									outStream.writeObject("NOWS");
+									sc1.close();
+									break;
+								}
+								sc1.close();
+
+								if (workspaceFile.delete()) {
+									tempFile.renameTo(workspaceFile);
+									outStream.writeObject("OK");
+								}else {
+									System.out.println("Something went wrong! 311");
+								}
+								
+							}
 							
+							
+							//-----------------------------
+							
+							
+							//-----------------------------
+							//Ver se user é owner do ws
+
+							//-----------------------------
+							
+							//user nao é owner : NOPERM
+							//&outStream.writeObject("NOPERM");
+							
+							//ws n existe : NOWS
+							//user nao existe : NOUSER
 							
 							break;
 							

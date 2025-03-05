@@ -143,7 +143,10 @@ public class mySharingClient {
                         break;
                     
                     case "LW":
-                        break;
+                        if(arrayDeArgumentos.length == 1){
+                            sendAndReceive(inputStream, outputStream, inputDoUser);
+                            break;
+                        }
                     
                     case "LS":
                         break;

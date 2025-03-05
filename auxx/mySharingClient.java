@@ -47,26 +47,9 @@ public class mySharingClient {
         userInputPassword = password;
 
         while (respostaInvalida) {
-            
-        
-            //----------Guardar: UserID Password
-            
-
-            
-            //System.out.print("User:_ ");
-            //String userInputUser = scanner.nextLine();
-
-            //System.out.print("Password:_ ");
-            //String userInputPassword = scanner.nextLine();
-
-            //.....................................................
-
-            //-----------------Envia o user e pass ao server para autentificaçao
 
             outputStream.writeObject(userInputUser);
             outputStream.writeObject(userInputPassword);
-
-            //
 
             //-----------------Se autentificado corretamente: OK-USER || Se novo user: OK-NEW-USER
             respostaAutentificacao = (String) inputStream.readObject();   
@@ -74,9 +57,12 @@ public class mySharingClient {
             if (respostaInvalida) {
 
                 //Fica a repetir o processo até introduzir a password correta ou um novo user e pass
+
                 System.out.print("Resposta Invalida, tente novamente (eg: Alberto:benfica): ");
+                
                 String input = scanner.nextLine();
                 String[] credentials = input.split(":");
+
                 userInputUser = credentials[0];
                 userInputPassword = credentials[1];
                 //System.out.println("Voce digitou: " + input);

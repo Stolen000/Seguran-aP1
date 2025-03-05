@@ -1,6 +1,2 @@
-Alberto:benfica
-<<<<<<< Updated upstream
-rui:passe
-=======
-Miguel:java
->>>>>>> Stashed changes
+b:b
+a:a

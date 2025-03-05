@@ -123,8 +123,8 @@ public class mySharingServer{
 								outStream.writeObject("OK");
 								break;
 							} else {
-								if (findWorkspace(arrayDeArgumentos[1]).equals("-1")){
-									//Nao encontrou ws com o nome dado
+								if (!findWorkspace(arrayDeArgumentos[1]).equals("-1")){
+									//encontrou ws com o nome dado
 									outStream.writeObject("NOK");
 									break;
 								} 
@@ -215,12 +215,14 @@ public class mySharingServer{
             
         }
 
-		private String ListOfAssociatedWS(String user) {
+		private String ListOfAssociatedWS(String user) throws FileNotFoundException {
 			StringBuilder strBuilder = new StringBuilder("{ ");
 			//Pesquisar ws e ficar com os que tem o user la associado, meter no sb no formato {<ws1>, <ws2>}
-			Scanner scanner = new Scanner("workspaces.txt");
+			File file = new File("workspaces.txt");
+			Scanner scanner = new Scanner(file);
 			String linha;
 			boolean primeiroLido = false;
+			System.out.println("User is " + user + "|");
 			while (scanner.hasNextLine()) {
 				linha = scanner.nextLine();
 				if(linha.contains(":" + user) || linha.contains(", " + user)){
@@ -383,8 +385,9 @@ public class mySharingServer{
 
 		//Encontra user no ficheiro user.txt
 		//Returns true se encontrou, falso caso contrario
-		private boolean findUser(String userToFind){
-			Scanner scanner = new Scanner("users.txt");
+		private boolean findUser(String userToFind) throws FileNotFoundException{
+			File file = new File("users.txt");
+			Scanner scanner = new Scanner(file);
 			String linha;
 			String[] parts;
 			while (scanner.hasNextLine()) {
@@ -428,45 +431,47 @@ public class mySharingServer{
 		//Retorna OK se sucesso
 		private String addUserToWS(String workspace, String userToAdd, String user) throws IOException{
 			boolean foundAndOwner = false;
-			Scanner scanner = new Scanner("workspaces.txt");
-			File tempFile = new File("temp.txt");
-			PrintWriter writer = new PrintWriter(new FileWriter(tempFile));
-			String linha;
 			File wsFile = new File("workspaces.txt");
+			Scanner scanner = new Scanner(wsFile);
+			File tempFile = new File("temp.txt");
+			try (PrintWriter writer = new PrintWriter(new FileWriter(tempFile))) {
+				String linha;
 
-			while (scanner.hasNextLine()) {
-				linha = scanner.nextLine();
-				//Encontrou um workspace com esse nome
-				if (linha.startsWith(workspace + ":")) {
-					if(!linha.startsWith(workspace + ":" + user)){
-						//O user não é owner
-						return "NOPERM";
-					} else {
-						//É o owner ent faz a add do user
-						linha += ", " + userToAdd;
-						foundAndOwner = true;
+				while (scanner.hasNextLine()) {
+					linha = scanner.nextLine();
+					//Encontrou um workspace com esse nome
+					if (linha.startsWith(workspace + ":")) {
+						if(!linha.startsWith(workspace + ":" + user)){
+							//O user não é owner
+							scanner.close();
+							return "NOPERM";
+						} else {
+							//É o owner ent faz a add do user
+							linha += ", " + userToAdd;
+							foundAndOwner = true;
+						}
 					}
+					writer.println(linha);
 				}
-				writer.println(linha);
-			}
-			writer.close();
+				writer.close();
 
-			if(foundAndOwner){
-				linha = "OK";
-			} else{
-				linha = "NOWS";
-			}		
-
-			if (linha.equals("OK")) {
-				if(wsFile.delete()){
-					tempFile.renameTo(wsFile);
-				} else {
-					System.out.println("Something went wrong! 311");
+				if(foundAndOwner){
+					linha = "OK";
+				} else{
+					linha = "NOWS";
+				}		
+				scanner.close();
+				if (linha.equals("OK")) {
+					if(wsFile.delete()){
+						tempFile.renameTo(wsFile);
+					} else {
+						System.out.println("Something went wrong! 311");
+					}
+					
 				}
 				
+				return linha;
 			}
-
-			return linha;
 		}
 
 		private void escreveLinhaNovaDoWsFile(String workspaceName, String user) throws IOException{

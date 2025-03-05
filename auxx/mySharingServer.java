@@ -406,7 +406,7 @@ public class mySharingServer{
 			scanner.close();
 			return false; 
 		}
-
+		//primeiro commit do tonho
 		private String findWorkspace(String workspaceToFind){
 			Scanner scanner = new Scanner("workspaces.txt");
 			String linha;
@@ -427,7 +427,7 @@ public class mySharingServer{
 
 		//Metodo do ADD, retorna o output para mandar ao servidor
 		//NOPERM se user nao for owner do ws
-		//NOWS se nao existir o ws
+		//NOWS se nao existir o ws 
 		//Retorna OK se sucesso
 		private String addUserToWS(String workspace, String userToAdd, String user) throws IOException{
 			boolean foundAndOwner = false;

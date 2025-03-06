@@ -182,8 +182,7 @@ public class mySharingServer{
 						case "LW":
 							//Lista as WS associadas com um user no formato {<ws1>, <ws2>}
 							List<String> userWs = ListOfAssociatedWS(user);
-							//rebuscado
-							String[] lista = (String[]) userWs.toArray();
+							String[] lista = userWs.toArray(new String[0]);
 							outStream.writeObject(formatMsg(lista));
 							break;
 

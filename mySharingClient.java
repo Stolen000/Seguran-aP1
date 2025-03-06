@@ -1,5 +1,3 @@
-package auxx;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -11,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Scanner;
+
 
 
 
@@ -137,6 +136,8 @@ public class mySharingClient {
                         }        
                                                
                     case "DW":
+
+                        //privateFunctions.sendFile(outputStream,filepath);
         
                         break;  
                     case "RM":

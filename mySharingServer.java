@@ -15,6 +15,7 @@ import java.io.Writer;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
@@ -149,12 +150,11 @@ public class mySharingServer{
 							break;
 							
 						//UP <ws> <file1> ... <filen>
+						//Funciona tudo bem mas n funciona caso ja exista ficheiro
 						case "UP":
 							StringBuilder sBuilder = new StringBuilder();
 							int quantosFiles = arrayDeArgumentos.length - 2;
-							System.out.println("WSRAW: " + arrayDeArgumentos[1]);
 							String ws = findWorkspace(arrayDeArgumentos[1]);
-							System.out.println("WS: " + ws);
 							//verificar Se ws existe, cliente n pertence ao ws NOWS | NOPERM
 							if(ws.equals("-1")){
 								//nao existe ws
@@ -167,24 +167,27 @@ public class mySharingServer{
 								outStream.writeObject("NOPERM");
 								break;
 							}
-
 							outStream.writeObject("OK");
+
 							String respostaString;
 							String pathAtual;
+							
 							//Receber os ficheiros
 							for (int i = 0; i < quantosFiles; i++) {
 								pathAtual = arrayDeArgumentos[i+2];
 								respostaString = privateFunctions.receiveFile(inStream, arrayDeArgumentos[1]);
 								if(respostaString.equals("1")){
 									//Correu bem 
-									sBuilder.append(pathAtual + ": OK\n");
+									sBuilder.append(pathAtual + ": OK\n		  ");
+								} else if(respostaString.equals("-2")){
+									//se já existe no ws o file
+									sBuilder.append(pathAtual + ": Já existe no Ws\n		  ");
 								} else if(!respostaString.equals("0")){
 									//invalido e respostaString tem o path invalido
-									sBuilder.append(pathAtual + ": Nao Existe\n");
+									sBuilder.append(pathAtual + ": Nao Existe\n		  ");
 								} else{
-									sBuilder.append(pathAtual + ": ERROR\n");
+									sBuilder.append(pathAtual + ": ERROR\n		  ");
 								}
-
 							}
 							
 							//Final mandamos a mensagem completa para o cliente.

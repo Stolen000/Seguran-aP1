@@ -1,2 +1,2 @@
-workspace1:ryan>ryan, be
-workspace2:be>be
+workspace2:rui>rui
+ws1:rui>rui

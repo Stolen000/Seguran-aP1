@@ -196,7 +196,7 @@ public class mySharingServer{
 							      
 													
 						case "DW":
-			
+
 							break;  
 						case "RM":
 							if(arrayDeArgumentos.length >= 2){
@@ -214,7 +214,7 @@ public class mySharingServer{
 							break;
 
 						case "LS":
-							String filepath = arrayDeArgumentos[0] + File.separator;
+							String filepath = arrayDeArgumentos[1] + File.separator;
 							File wsFolder = new File(filepath);
 							String [] files = wsFolder.list();
 							outStream.writeObject(formatMsg(files));
@@ -264,11 +264,13 @@ public class mySharingServer{
 			
 			//files
 				//file existe
-			//apagar file
+			//apagar file																								funciona este print apenas para 1 file a rm
+			System.out.println("entrei no remove function com os argumentos ws e file = " + arrayDeArgumentos[1] + " e " + arrayDeArgumentos[2]);
+
 			List <String> userWs = ListOfAssociatedWS(user);
 			StringBuilder sb = new StringBuilder();
-			if(findWorkspace(arrayDeArgumentos[0]) != "-1"){
-				if(userWs.contains(arrayDeArgumentos[0])){
+			if(findWorkspace(arrayDeArgumentos[1]) != "-1"){
+				if(userWs.contains(arrayDeArgumentos[1])){
 					for(int i = 2; i < arrayDeArgumentos.length; i++){
 						boolean removed = removeFile(arrayDeArgumentos[1], arrayDeArgumentos[i]);
 						if(removed){
@@ -293,7 +295,6 @@ public class mySharingServer{
 
 		//formatar resultado depois para a LW
 		private List<String> ListOfAssociatedWS(String user) throws FileNotFoundException {
-			//StringBuilder strBuilder = new StringBuilder("{ ");
 			//Pesquisar ws e ficar com os que tem o user la associado, meter no sb no formato {<ws1>, <ws2>}
 			List <String> userWs = new ArrayList<>();
 			File file = new File("workspaces.txt");
@@ -317,7 +318,7 @@ public class mySharingServer{
 		private boolean removeFile(String ws, String fileName){
 			boolean suces = false;
 			String filepath = ws + File.separator + fileName;
-
+			System.out.println("o file a deletar tem filepath = " + filepath);
 			File toRemove = new File(filepath);
 			if(toRemove.exists()){
 				toRemove.delete();

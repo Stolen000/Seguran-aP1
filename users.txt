@@ -4,6 +4,4 @@ andre:dias
 aba:aba
 ryan:lol
 be:ha
-ryan1:lol
-ryan2:lol
-rui:ruipasse
+gui:dias

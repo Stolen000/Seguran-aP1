@@ -166,6 +166,13 @@ public class mySharingClient {
         
                         break;  
                     case "RM":
+                        if(arrayDeArgumentos.length >= 3){
+                            sendAndReceive(inputStream, outputStream, inputDoUser);
+                            break;
+                        }
+
+
+
                         break;
                     
                     case "LW":
@@ -175,6 +182,11 @@ public class mySharingClient {
                         }
                     
                     case "LS":
+                        if(arrayDeArgumentos.length == 2){
+                            sendAndReceive(inputStream, outputStream, inputDoUser);
+                            break;
+                        }
+                        //mandar msg de erro?
                         break;
                     case "HELP":
                         printMenuDeOperacoes();

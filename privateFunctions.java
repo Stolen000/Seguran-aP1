@@ -11,8 +11,8 @@ public class privateFunctions {
     
     //Funcao que recebe um ficheiro pela inStream dada, se for dado workspace mete o ficheiro no workspace como pasta,
     // se workspace == null, apenas mete o ficheiro na diretoria atual.
-    //Retorna true se recebeu o ficheiro corretamente, false caso contrario
-    public static boolean receiveFile(ObjectInputStream inStream, String workspace){
+    //Retorna "1" se recebeu o ficheiro corretamente, "0" caso contrario e path se o file for invalido
+    public static String receiveFile(ObjectInputStream inStream, String workspace){
         try {
             return receiveFilePriv(inStream, workspace);
         } catch (ClassNotFoundException e) {
@@ -20,21 +20,21 @@ public class privateFunctions {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return false;
+        return "0";
     }
 
 
     //Funcao que envia pelo outStream um ficheiro cujo filepath é enviado por argumento
-    //Retorna true se o envio foi completo, falso caso contrario
-    public static boolean sendFile(ObjectOutputStream outStream, String filePath){
+    //Retorna 1 se o envio foi completo, -1 se ficheiro foi invalido (path = "-1") e 0 os restantes casos
+    public static String sendFile(ObjectOutputStream outStream, String filePath, boolean isValid){
         try {
-            return sendFilePriv(outStream, filePath);
+            return sendFilePriv(outStream, filePath, isValid);
         } catch (Exception e) {
-            return false;
+            return "0";
         }
     }
 
-		private static boolean receiveFilePriv(ObjectInputStream inStream, String workspace) throws ClassNotFoundException, IOException{
+		private static String receiveFilePriv(ObjectInputStream inStream, String workspace) throws ClassNotFoundException, IOException{
             //Receber tamanho do ficheiro a receber
 			int fileSize = (int) inStream.readObject();
 			System.out.println("File size = " + fileSize);
@@ -42,6 +42,10 @@ public class privateFunctions {
             //Receber titulo do ficheiro
             String fileTitle = (String) inStream.readObject();
             System.out.println("File title: " + fileTitle);
+
+            if(fileSize == -1){
+                return fileTitle;
+            }
 
             //buffer
 			byte[] buffer = new byte[1024];
@@ -57,7 +61,7 @@ public class privateFunctions {
                 file.createNewFile();
             } else {
                 System.out.println("File ja existe");
-                return false;
+                return "0";
             }
             
 
@@ -79,26 +83,29 @@ public class privateFunctions {
 			System.out.println("File received. Final size: " + file.length());
 			buffOutputStream.close();
 
-            return true;
+            return "1";
 		}
     
     
-		private static boolean sendFilePriv(ObjectOutputStream outStream, String filePath) throws IOException{
+		private static String sendFilePriv(ObjectOutputStream outStream, String filePath, boolean isValid) throws IOException{
             //ficheiro a mandar
 			File ficheiro = new File(filePath);
 
-            //checka se ficheiro existe ou nao
-            if(!ficheiro.exists()){
-                return false;
-            }
+            //se for invalido size = -1
+            int sizeFile = isValid ? (int) ficheiro.length() : -1;
 
+            //Se for invalido manda -1 como size, e o server so recebe depois o path
             //Manda o size do ficheiro a mandar ao servidor
-			int sizeFile = (int) ficheiro.length();
+			sizeFile = (int) ficheiro.length();
 			outStream.writeObject(sizeFile);
 
             //Manda o filepath do ficheiro a mandar ao servidor
-            outStream.writeObject(ficheiro);
+            outStream.writeObject(filePath);
 
+            // If the file is not valid, exit early
+            if (!isValid) {
+                return "-1";
+            }
 			byte[] buffer = new byte[1024];
 
 			FileInputStream fileInputStream = new FileInputStream(ficheiro);
@@ -112,6 +119,6 @@ public class privateFunctions {
 			fileInputStream.close();
 			buffInputStream.close();
 
-            return true;
+            return "1";
 		}
 }

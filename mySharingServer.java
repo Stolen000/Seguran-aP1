@@ -1,5 +1,3 @@
-package auxx;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -152,21 +150,47 @@ public class mySharingServer{
 							
 						//UP <ws> <file1> ... <filen>
 						case "UP":
-							if(arrayDeArgumentos.length >= 3){
-								File ficheiroAtual;
-								for (int i = 2; i < arrayDeArgumentos.length; i++) {
-									ficheiroAtual = new File(arrayDeArgumentos[i]) ;
-									if(!ficheiroAtual.exists()){
-										//Mandar um sinal ao serv?
-										//TODO Resto desta logica
-
-									}
-									
-									//Mandamos o comando por completo primeiro ao server para ele se perparar e dps começamos a mandar?
-									//Podemos mandar o comando + quantos ficheiros tentaremos (o length - 2) e dps o processo comeca?? 
-								}
+							StringBuilder sBuilder = new StringBuilder();
+							int quantosFiles = arrayDeArgumentos.length - 2;
+							System.out.println("WSRAW: " + arrayDeArgumentos[1]);
+							String ws = findWorkspace(arrayDeArgumentos[1]);
+							System.out.println("WS: " + ws);
+							//verificar Se ws existe, cliente n pertence ao ws NOWS | NOPERM
+							if(ws.equals("-1")){
+								//nao existe ws
+								outStream.writeObject("NOWS");
 								break;
-							}        
+							}
+							//Se a ws contem o user como owner ou utilizador
+							if(!ws.contains(":" + user) && !ws.contains(", " + user)){
+								//nao tem permissoes
+								outStream.writeObject("NOPERM");
+								break;
+							}
+
+							outStream.writeObject("OK");
+							String respostaString;
+							String pathAtual;
+							//Receber os ficheiros
+							for (int i = 0; i < quantosFiles; i++) {
+								pathAtual = arrayDeArgumentos[i+2];
+								respostaString = privateFunctions.receiveFile(inStream, arrayDeArgumentos[1]);
+								if(respostaString.equals("1")){
+									//Correu bem 
+									sBuilder.append(pathAtual + ": OK\n");
+								} else if(!respostaString.equals("0")){
+									//invalido e respostaString tem o path invalido
+									sBuilder.append(pathAtual + ": Nao Existe\n");
+								} else{
+									sBuilder.append(pathAtual + ": ERROR\n");
+								}
+
+							}
+							
+							//Final mandamos a mensagem completa para o cliente.
+							outStream.writeObject(sBuilder.toString());	
+							
+							      
 													
 						case "DW":
 			
@@ -465,8 +489,9 @@ public class mySharingServer{
 			return false; 
 		}
 		
-		private String findWorkspace(String workspaceToFind){
-			Scanner scanner = new Scanner("workspaces.txt");
+		private String findWorkspace(String workspaceToFind) throws FileNotFoundException{
+			File file = new File("workspaces.txt");
+			Scanner scanner = new Scanner(file);
 			String linha;
 			while (scanner.hasNextLine()) {
 				linha = scanner.nextLine();

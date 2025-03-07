@@ -120,20 +120,45 @@ public class mySharingClient {
                     //UP <ws> <file1> ... <filen>
                     case "UP":
                         if(arrayDeArgumentos.length >= 3){
+                            //Checa se todos os ficheiros existem no cliente, se nao mete a "-1" para o serv responder com invalido
                             File ficheiroAtual;
+                            //String mensagemParaServer = inputDoUser + sb.toString();
+                            
+                            //mandou primeira mensagem
+                            outputStream.writeObject(inputDoUser);
+                            
+                            String respostaPrimeira = (String) inputStream.readObject();
+                            //Se nao foi validada a operacao, acabar
+                            if(!respostaPrimeira.equals("OK")){
+                                System.out.println("Resposta: " + respostaPrimeira);
+                                break;
+                            } 
+
+                            //Recebeu OK
+                            boolean validade;
+
+                            //Percorre todos os ficheiros e analisa se sao validos
                             for (int i = 2; i < arrayDeArgumentos.length; i++) {
                                 ficheiroAtual = new File(arrayDeArgumentos[i]) ;
-                                if(!ficheiroAtual.exists()){
-                                    //Mandar um sinal ao serv?
-                                    //TODO Resto desta logica
-
-                                }
-                                
-                                //Mandamos o comando por completo primeiro ao server para ele se perparar e dps começamos a mandar?
-                                //Podemos mandar o comando + quantos ficheiros tentaremos (o length - 2) e dps o processo comeca?? 
+                                validade = ficheiroAtual.exists();
+                                privateFunctions.sendFile(outputStream, arrayDeArgumentos[i], validade);
                             }
+
+                            //receber a mensagem final do servidor
+                            String respostaFinal = (String) inputStream.readObject();
+                            System.out.println("Resposta: " + respostaFinal);
+                            
+                            //Servidor tem que saber o nome de todos os ficheiros, e saber qual é invalido
+
+                            //send input -> esperar validação -> comecar a mandar -> esperar ok outra vez?
+                            
+                            //sendAndReceive(inputStream, outputStream, inputDoUser);
                             break;
                         }        
+
+
+
+                        
                                                
                     case "DW":
 

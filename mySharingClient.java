@@ -119,58 +119,15 @@ public class mySharingClient {
                     //UP <ws> <file1> ... <filen>
                     case "UP":
                         if(arrayDeArgumentos.length >= 3){
-                            //Checa se todos os ficheiros existem no cliente, se nao mete a "-1" para o serv responder com invalido
-                            File ficheiroAtual;
-                            String pathFicheiroAtual;
-                            //String mensagemParaServer = inputDoUser + sb.toString();
-                            
                             //mandou primeira mensagem
                             outputStream.writeObject(inputDoUser);
-                            
-                            
                             String respostaDoServer = (String) inputStream.readObject();
                             //Se nao foi validada a operacao, acabar
                             if(!respostaDoServer.equals("OK")){
                                 doneOperation = true;
                                 break;
                             } 
-
-                            //respostaDoServer = (String)inputStream.readObject();
-
-                            //Recebeu OK
-                            StringBuilder stringBuilder = new StringBuilder("Resposta: ");
-                            boolean readBool;
-
-                            //Percorre todos os ficheiros e analisa se sao validos
-                            for (int i = 2; i < arrayDeArgumentos.length; i++) {
-                                pathFicheiroAtual = arrayDeArgumentos[i];
-                                ficheiroAtual = new File(pathFicheiroAtual);
-                                
-                                //escreve no strBuilder o pathname
-                                stringBuilder.append(pathFicheiroAtual).append(": ");
-                                if(ficheiroAtual.exists()){
-                                    //Envia o pathname
-                                    outputStream.writeObject(pathFicheiroAtual);
-                                    
-                                    //Recebe validação do server (boolean)
-                                    /////////////
-                                    readBool = (boolean) inputStream.readObject();
-                                    if(readBool){
-                                        //Validou entao envia ficheiro
-                                        privateFunctions.sendFile(outputStream, pathFicheiroAtual);
-                                    } 
-                                    // Append no strBuilder a resposta do server
-                                    respostaDoServer = (String) inputStream.readObject();
-                                    stringBuilder.append(respostaDoServer).append("\n");
-                                } else {
-                                    //envia o "-1" como pathname para simbolizar nao existe no cliente ao servidor
-                                    //(para nao ficar á espera)
-                                    outputStream.writeObject("-1");
-                                    //Da logo append da mensagem correta
-                                    stringBuilder.append("Nao Existe");
-                                }
-                            }
-                            System.out.println(stringBuilder.toString());
+                            System.out.println(uploadFicheiros(inputStream, outputStream, arrayDeArgumentos));
                             doneOperation = true;
                         }    
                         break;    
@@ -238,6 +195,48 @@ public class mySharingClient {
         outputStream.close();
         //----
         clientSocket.close();
+    }
+
+    //Envia ficheiros presentes no arrayDeArgumentos
+    //Retorna a string que representa a resposta do servidor
+    private static String uploadFicheiros(ObjectInputStream inputStream, ObjectOutputStream outputStream,
+            String[] arrayDeArgumentos) throws IOException, ClassNotFoundException {
+        File ficheiroAtual;
+        String pathFicheiroAtual;
+        String respostaDoServer;
+        StringBuilder stringBuilder = new StringBuilder("Resposta: ");
+        boolean readBool;
+
+        //Percorre todos os ficheiros e analisa se sao validos
+        for (int i = 2; i < arrayDeArgumentos.length; i++) {
+            pathFicheiroAtual = arrayDeArgumentos[i];
+            ficheiroAtual = new File(pathFicheiroAtual);
+            
+            //escreve no strBuilder o pathname
+            stringBuilder.append(pathFicheiroAtual).append(": ");
+            if(ficheiroAtual.exists()){
+                //Envia o pathname
+                outputStream.writeObject(pathFicheiroAtual);
+                
+                //Recebe validação do server (boolean)
+                /////////////
+                readBool = (boolean) inputStream.readObject();
+                if(readBool){
+                    //Validou entao envia ficheiro
+                    privateFunctions.sendFile(outputStream, pathFicheiroAtual);
+                } 
+                // Append no strBuilder a resposta do server
+                respostaDoServer = (String) inputStream.readObject();
+                stringBuilder.append(respostaDoServer).append("\n");
+            } else {
+                //envia o "-1" como pathname para simbolizar nao existe no cliente ao servidor
+                //(para nao ficar á espera)
+                outputStream.writeObject("-1");
+                //Da logo append da mensagem correta
+                stringBuilder.append("Nao Existe");
+            }
+        }
+        return stringBuilder.toString();
     }
 
     private static void printMenuDeOperacoes() {

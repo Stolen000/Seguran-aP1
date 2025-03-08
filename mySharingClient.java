@@ -90,12 +90,12 @@ public class mySharingClient {
                 //------------------v Input do comando do user
                 //inputDoUser = new String("CREATE workspace004");
 
-
+                boolean doneOperation = false;
                 System.out.print("Comando: ");
                 inputDoUser = scanner.nextLine();
                 System.out.println();
                 //In progress:Tratar input
-                arrayDeArgumentos = inputDoUser.trim().split(" ");
+                arrayDeArgumentos = inputDoUser.trim().split("\\s+");
                 comando = arrayDeArgumentos[0];
 
                 switch (comando) {
@@ -103,9 +103,9 @@ public class mySharingClient {
                     case "CREATE":
                         if(arrayDeArgumentos.length == 2){
                             sendAndReceive(inputStream, outputStream, inputDoUser);
-                            
-                            break;
+                            doneOperation = true;
                         } 
+                        break;
                         //se nao entrar no if ele cai no default
 
                     //ADD <user1> <ws>
@@ -113,88 +113,102 @@ public class mySharingClient {
                         //precisa de mais tramento? (?)
                         if(arrayDeArgumentos.length == 3){
                             sendAndReceive(inputStream, outputStream, inputDoUser);
-                            break;
+                            doneOperation = true;
                         }
-
-
+                        break;
                     //UP <ws> <file1> ... <filen>
                     case "UP":
                         if(arrayDeArgumentos.length >= 3){
                             //Checa se todos os ficheiros existem no cliente, se nao mete a "-1" para o serv responder com invalido
                             File ficheiroAtual;
+                            String pathFicheiroAtual;
                             //String mensagemParaServer = inputDoUser + sb.toString();
                             
                             //mandou primeira mensagem
                             outputStream.writeObject(inputDoUser);
                             
-                            String respostaPrimeira = (String) inputStream.readObject();
+                            
+                            String respostaDoServer = (String) inputStream.readObject();
                             //Se nao foi validada a operacao, acabar
-                            if(!respostaPrimeira.equals("OK")){
-                                System.out.println("Resposta: " + respostaPrimeira);
+                            if(!respostaDoServer.equals("OK")){
+                                doneOperation = true;
                                 break;
                             } 
 
+                            //respostaDoServer = (String)inputStream.readObject();
+
                             //Recebeu OK
-                            boolean validade;
+                            StringBuilder stringBuilder = new StringBuilder("Resposta: ");
+                            boolean readBool;
 
                             //Percorre todos os ficheiros e analisa se sao validos
                             for (int i = 2; i < arrayDeArgumentos.length; i++) {
-                                ficheiroAtual = new File(arrayDeArgumentos[i]) ;
-                                validade = ficheiroAtual.exists();
-                                privateFunctions.sendFile(outputStream, arrayDeArgumentos[i], validade);
+                                pathFicheiroAtual = arrayDeArgumentos[i];
+                                ficheiroAtual = new File(pathFicheiroAtual);
+                                
+                                //escreve no strBuilder o pathname
+                                stringBuilder.append(pathFicheiroAtual).append(": ");
+                                if(ficheiroAtual.exists()){
+                                    //Envia o pathname
+                                    outputStream.writeObject(pathFicheiroAtual);
+                                    
+                                    //Recebe validação do server (boolean)
+                                    /////////////
+                                    readBool = (boolean) inputStream.readObject();
+                                    if(readBool){
+                                        //Validou entao envia ficheiro
+                                        privateFunctions.sendFile(outputStream, pathFicheiroAtual);
+                                    } 
+                                    // Append no strBuilder a resposta do server
+                                    respostaDoServer = (String) inputStream.readObject();
+                                    stringBuilder.append(respostaDoServer).append("\n");
+                                } else {
+                                    //envia o "-1" como pathname para simbolizar nao existe no cliente ao servidor
+                                    //(para nao ficar á espera)
+                                    outputStream.writeObject("-1");
+                                    //Da logo append da mensagem correta
+                                    stringBuilder.append("Nao Existe");
+                                }
                             }
-
-                            //receber a mensagem final do servidor
-                            String respostaFinal = (String) inputStream.readObject();
-                            System.out.println("Resposta: " + respostaFinal);
-                            
-                            //Servidor tem que saber o nome de todos os ficheiros, e saber qual é invalido
-
-                            //send input -> esperar validação -> comecar a mandar -> esperar ok outra vez?
-                            
-                            //sendAndReceive(inputStream, outputStream, inputDoUser);
-                            break;
-                        }        
-
-
-
-                        
-                                               
+                            System.out.println(stringBuilder.toString());
+                            doneOperation = true;
+                        }    
+                        break;    
+                    //DW <ws> <file1> ... <filen>                
                     case "DW":
-
-                        //privateFunctions.sendFile(outputStream,filepath);
-        
-                        break;  
+                        if(arrayDeArgumentos.length >= 3){
+                            doneOperation = true;
+                        }
+                        break;
                     case "RM":
                         if(arrayDeArgumentos.length >= 3){
                             sendAndReceive(inputStream, outputStream, inputDoUser);
-                            break;
+                            doneOperation = true;
                         }
-
-
-
                         break;
-                    
                     case "LW":
                         if(arrayDeArgumentos.length == 1){
                             sendAndReceive(inputStream, outputStream, inputDoUser);
-                            break;
+                            doneOperation = true;
                         }
-                    
+                        break;
                     case "LS":
                         if(arrayDeArgumentos.length == 2){
                             sendAndReceive(inputStream, outputStream, inputDoUser);
-                            break;
+                            doneOperation = true;
                         }
                         //mandar msg de erro?
-                        break;
-                    case "HELP":
-                        printMenuDeOperacoes();
+                        //So n das break fora do if para ele ir pro default e printar o menu
                         break;
                     default:
-                        System.out.println("Comando invalido, tente novamente.");
-                        printMenuDeOperacoes();
+                        //N faz nada
+                        break;
                 }
+                if(!doneOperation){
+                    System.out.println("Comando invalido, tente novamente.");
+                    printMenuDeOperacoes();
+                }
+                
 
                 //------------------^
 

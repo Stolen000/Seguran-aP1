@@ -152,9 +152,8 @@ public class mySharingServer{
 						//UP <ws> <file1> ... <filen>
 						//Funciona tudo bem mas n funciona caso ja exista ficheiro
 						case "UP":
-							StringBuilder sBuilder = new StringBuilder();
-							int quantosFiles = arrayDeArgumentos.length - 2;
-							String ws = findWorkspace(arrayDeArgumentos[1]);
+							String workspacePath = arrayDeArgumentos[1];
+							String ws = findWorkspace(workspacePath);
 							//verificar Se ws existe, cliente n pertence ao ws NOWS | NOPERM
 							if(ws.equals("-1")){
 								//nao existe ws
@@ -169,32 +168,33 @@ public class mySharingServer{
 							}
 							outStream.writeObject("OK");
 
-							String respostaString;
-							String pathAtual;
-							
-							//Receber os ficheiros
-							for (int i = 0; i < quantosFiles; i++) {
-								pathAtual = arrayDeArgumentos[i+2];
-								respostaString = privateFunctions.receiveFile(inStream, arrayDeArgumentos[1]);
-								if(respostaString.equals("1")){
-									//Correu bem 
-									sBuilder.append(pathAtual + ": OK\n		  ");
-								} else if(respostaString.equals("-2")){
-									//se já existe no ws o file
-									sBuilder.append(pathAtual + ": Já existe no Ws\n		  ");
-								} else if(!respostaString.equals("0")){
-									//invalido e respostaString tem o path invalido
-									sBuilder.append(pathAtual + ": Nao Existe\n		  ");
-								} else{
-									sBuilder.append(pathAtual + ": ERROR\n		  ");
-								}
-							}
-							
-							//Final mandamos a mensagem completa para o cliente.
-							outStream.writeObject(sBuilder.toString());	
-							
-							      
-													
+							String pathname;
+							String stringDeResposta;
+							boolean isFileNewInThisWS;
+                            for (int i = 2; i < arrayDeArgumentos.length; i++) {
+                                pathname = (String) inStream.readObject();
+                                if(!pathname.equals("-1")){
+                                    //Checkar se existe no ws um com o nome igual
+                                    //E enviar ao server
+									//check se o path do ficheiro ja existe na ws
+									isFileNewInThisWS = !isFileInWorkspace(pathname,workspacePath);
+									//Envia ao cliente a validade do seu ficheiro (Se já existe no ws ou n)
+									outStream.writeObject(isFileNewInThisWS);
+									if(isFileNewInThisWS){
+										//Ficheiro é novo logo pode receber
+										privateFunctions.receiveFile(inStream, pathname, workspacePath);
+										stringDeResposta = "OK";
+									} else {
+										//Existe um ficheiro com o mesmo nome no servidor
+										stringDeResposta = "Existe um ficheiro com o mesmo nome no servidor";
+									}
+									//Envia resposta ao Cliente ou "OK" ou "Existe um ficheiro com o mesmo nome no servidor"
+									outStream.writeObject(stringDeResposta);
+									stringDeResposta = "";
+                                }
+                                //Se for invalido apenas passar em frente, cliente trata do resto
+                            }
+
 						case "DW":
 
 							break;  
@@ -241,15 +241,19 @@ public class mySharingServer{
 			}
         }
 
+		
+
 		private String formatMsg(String[] lista){
 			StringBuilder sb = new StringBuilder();
 			sb.append("{");
-			for(int i = 0; i < lista.length; i++){
-				if(i == lista.length - 1){
-					sb.append(lista[i]);
-				}
-				else{
-					sb.append(lista[i] + ", ");
+			if(lista != null){
+				for(int i = 0; i < lista.length; i++){
+					if(i == lista.length - 1){
+						sb.append(lista[i]);
+					}
+					else{
+						sb.append(lista[i] + ", ");
+					}
 				}
 			}
 			sb.append("}");
@@ -274,10 +278,10 @@ public class mySharingServer{
 					for(int i = 2; i < arrayDeArgumentos.length; i++){
 						boolean removed = removeFile(arrayDeArgumentos[1], arrayDeArgumentos[i]);
 						if(removed){
-							sb.append(arrayDeArgumentos[i] + ": APAGADO \n\n");
+							sb.append(arrayDeArgumentos[i] + ": APAGADO \n");
 						}
 						else{
-							sb.append("O ficheiro " + arrayDeArgumentos[i] + " não existe no workspace indicado\n\n");
+							sb.append("O ficheiro " + arrayDeArgumentos[i] + " não existe no workspace indicado\n");
 						}
 					}
 				}
@@ -570,6 +574,15 @@ public class mySharingServer{
 			try (FileWriter writer = new FileWriter(wsfile, true)) {
 				writer.write(strBldr.toString());
 			}
+		}
+
+		private boolean isFileInWorkspace(String filePathName, String workspacePath) {
+			File worskspaceFile = new File(workspacePath);
+			String[] filesInWs = worskspaceFile.list();
+			if(filesInWs != null && Arrays.asList(filesInWs).contains(filePathName)){
+				return true;
+			}
+			return false;
 		}
 	}
 }

@@ -152,24 +152,41 @@ public class mySharingServer{
 						//UP <ws> <file1> ... <filen>
 						//Funciona tudo bem mas n funciona caso ja exista ficheiro
 						case "UP":
-							String workspacePath = arrayDeArgumentos[1];
-							String ws = findWorkspace(workspacePath);
+							String workspaceUPPath = arrayDeArgumentos[1];
+							String wsUP = findWorkspace(workspaceUPPath);
 							//verificar Se ws existe, cliente n pertence ao ws NOWS | NOPERM
-							if(ws.equals("-1")){
+							if(wsUP.equals("-1")){
 								outStream.writeObject("NOWS");
 								break;
 							}
-							if(!doesUserHavePermsForWS(outStream, ws, user)){
+							if(!doesUserHavePermsForWS(outStream, wsUP, user)){
 								outStream.writeObject("NOPERM");
 								break;
 							}
 							//Se a ws contem o user como owner ou utilizador
 							outStream.writeObject("OK");
-							receiveFilesAndRespond(outStream, inStream, arrayDeArgumentos, workspacePath);
+							receiveFilesAndRespond(outStream, inStream, arrayDeArgumentos, workspaceUPPath);
 							break;
 
+						//RM <ws> <file1> ... <filen>
 						case "DW":
+							String workspaceDWPath = arrayDeArgumentos[1];
+							String wsDW = findWorkspace(workspaceDWPath);
+							//verificar Se ws existe, cliente n pertence ao ws NOWS | NOPERM
+							if(wsDW.equals("-1")){
+								outStream.writeObject("NOWS");
+								break;
+							}
+							if(!doesUserHavePermsForWS(outStream, wsDW, user)){
+								outStream.writeObject("NOPERM");
+								break;
+							}
+							//Se a ws contem o user como owner ou utilizador
+							outStream.writeObject("OK");
 
+							//Preparar para enviar
+							dwSendFiles();
+							
 							break;  
 						case "RM":
 							if(arrayDeArgumentos.length >= 2){
@@ -217,6 +234,7 @@ public class mySharingServer{
 		private boolean doesUserHavePermsForWS(ObjectOutputStream outStream, String ws, String user) throws IOException {
 			return ws.contains(":" + user) && !ws.contains(", " + user);
 		}
+		
 
 		private void receiveFilesAndRespond(ObjectOutputStream outStream, ObjectInputStream inStream,
 				String[] arrayDeArgumentos, String workspacePath) throws IOException, ClassNotFoundException {
@@ -229,7 +247,7 @@ public class mySharingServer{
 			        //Checkar se existe no ws um com o nome igual
 			        //E enviar ao server
 					//check se o path do ficheiro ja existe na ws
-					isFileNewInThisWS = !isFileInWorkspace(pathname,workspacePath);
+					isFileNewInThisWS = !privateFunctions.isFileInWorkspace(pathname,workspacePath);
 					//Envia ao cliente a validade do seu ficheiro (Se já existe no ws ou n)
 					outStream.writeObject(isFileNewInThisWS);
 					if(isFileNewInThisWS){
@@ -588,13 +606,8 @@ public class mySharingServer{
 			}
 		}
 
-		private boolean isFileInWorkspace(String filePathName, String workspacePath) {
-			File worskspaceFile = new File(workspacePath);
-			String[] filesInWs = worskspaceFile.list();
-			if(filesInWs != null && Arrays.asList(filesInWs).contains(filePathName)){
-				return true;
-			}
-			return false;
+		private String dwSendFiles(){
+			return "";
 		}
 	}
 }

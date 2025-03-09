@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Arrays;
 
 public class privateFunctions {
     
@@ -30,6 +31,11 @@ public class privateFunctions {
         } catch (Exception e) {
             return;
         }
+    }
+
+
+    public static boolean isFileInWorkspace(String filePathName, String workspacePath){
+        return isFileInWorkspacePriv(filePathName, workspacePath);
     }
 		private static void receiveFilePriv(ObjectInputStream inStream, String pathname, String workspace) throws ClassNotFoundException, IOException{
 			int fileSize = (int) inStream.readObject();
@@ -83,5 +89,14 @@ public class privateFunctions {
 			buffInputStream.close();
 
             return;
+		}
+
+        private static boolean isFileInWorkspacePriv(String filePathName, String workspacePath) {
+			File worskspaceFile = new File(workspacePath);
+			String[] filesInWs = worskspaceFile.list();
+			if(filesInWs != null && Arrays.asList(filesInWs).contains(filePathName)){
+				return true;
+			}
+			return false;
 		}
 }

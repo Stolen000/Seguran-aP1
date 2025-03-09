@@ -134,6 +134,17 @@ public class mySharingClient {
                     //DW <ws> <file1> ... <filen>                
                     case "DW":
                         if(arrayDeArgumentos.length >= 3){
+                            //mandou primeira mensagem
+                            outputStream.writeObject(inputDoUser);
+                            String respostaDoServer = (String) inputStream.readObject();
+                            //Se nao foi validada a operacao, acabar
+                            if(!respostaDoServer.equals("OK")){
+                                doneOperation = true;
+                                break;
+                            } 
+
+                            //Preparar para receber
+                            downloadFicheiros(inputStream,outputStream,arrayDeArgumentos);
                             doneOperation = true;
                         }
                         break;
@@ -196,6 +207,42 @@ public class mySharingClient {
         //----
         clientSocket.close();
     }
+
+    private static String downloadFicheiros(ObjectInputStream inputStream, ObjectOutputStream outputStream,
+            String[] arrayDeArgumentos) throws ClassNotFoundException, IOException{
+        
+        String filePathAtual;
+        boolean isFileNewInThisDir;
+        String stringDeResposta;
+        String dirAtual = System.getProperty("user.dir");
+        
+        //Percorre todos os ficheiros
+        for (int i = 2; i < arrayDeArgumentos.length; i++) {
+            filePathAtual = (String) inputStream.readObject();
+            if(!filePathAtual.equals("-1")){
+                //eh valido (existe no server)
+                //Pasta atual
+                
+                isFileNewInThisDir = !privateFunctions.isFileInWorkspace(filePathAtual, dirAtual);
+                
+                outputStream.writeObject(isFileNewInThisDir);
+                if(isFileNewInThisDir){
+                    privateFunctions.receiveFile(inputStream, filePathAtual, null);
+                    stringDeResposta = "OK";
+                } else {
+                    //Maybe perguntar se ele quer dar override ou cancelar o download para esse ficheiro.
+                    stringDeResposta = "Existe um ficheiro com o mesmo nome na diretoria";
+                }
+                outputStream.writeObject(stringDeResposta);
+                stringDeResposta = "";
+            }
+
+            //Nao era valido, passa á frente
+        }
+        
+        return null;
+    }
+
 
     //Envia ficheiros presentes no arrayDeArgumentos
     //Retorna a string que representa a resposta do servidor

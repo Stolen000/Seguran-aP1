@@ -185,8 +185,7 @@ public class mySharingServer{
 							outStream.writeObject("OK");
 
 							//Preparar para enviar
-							dwSendFiles();
-							
+							dwSendFiles(inStream,outStream,arrayDeArgumentos);
 							break;  
 						case "RM":
 							if(arrayDeArgumentos.length >= 2){
@@ -235,39 +234,6 @@ public class mySharingServer{
 			return ws.contains(":" + user) && !ws.contains(", " + user);
 		}
 		
-
-		private void receiveFilesAndRespond(ObjectOutputStream outStream, ObjectInputStream inStream,
-				String[] arrayDeArgumentos, String workspacePath) throws IOException, ClassNotFoundException {
-			String pathname;
-			String stringDeResposta;
-			boolean isFileNewInThisWS;
-			for (int i = 2; i < arrayDeArgumentos.length; i++) {
-			    pathname = (String) inStream.readObject();
-			    if(!pathname.equals("-1")){
-			        //Checkar se existe no ws um com o nome igual
-			        //E enviar ao server
-					//check se o path do ficheiro ja existe na ws
-					isFileNewInThisWS = !privateFunctions.isFileInWorkspace(pathname,workspacePath);
-					//Envia ao cliente a validade do seu ficheiro (Se já existe no ws ou n)
-					outStream.writeObject(isFileNewInThisWS);
-					if(isFileNewInThisWS){
-						//Ficheiro é novo logo pode receber
-						privateFunctions.receiveFile(inStream, pathname, workspacePath);
-						stringDeResposta = "OK";
-					} else {
-						//Existe um ficheiro com o mesmo nome no servidor
-						stringDeResposta = "Existe um ficheiro com o mesmo nome no servidor";
-					}
-					//Envia resposta ao Cliente ou "OK" ou "Existe um ficheiro com o mesmo nome no servidor"
-					outStream.writeObject(stringDeResposta);
-					stringDeResposta = "";
-			    }
-			    //Se for invalido apenas passar em frente, cliente trata do resto
-			}
-		}
-
-		
-
 		private String formatMsg(String[] lista){
 			StringBuilder sb = new StringBuilder();
 			sb.append("{");
@@ -606,8 +572,62 @@ public class mySharingServer{
 			}
 		}
 
-		private String dwSendFiles(){
-			return "";
+		private void receiveFilesAndRespond(ObjectOutputStream outStream, ObjectInputStream inStream,
+				String[] arrayDeArgumentos, String workspacePath) throws IOException, ClassNotFoundException {
+			String pathname;
+			String stringDeResposta;
+			boolean isFileNewInThisWS;
+			for (int i = 2; i < arrayDeArgumentos.length; i++) {
+			    pathname = (String) inStream.readObject();
+			    if(!pathname.equals("-1")){
+			        //Checkar se existe no ws um com o nome igual
+			        //E enviar ao server
+					//check se o path do ficheiro ja existe na ws
+					isFileNewInThisWS = !privateFunctions.isFileInWorkspace(pathname,workspacePath);
+					//Envia ao cliente a validade do seu ficheiro (Se já existe no ws ou n)
+					outStream.writeObject(isFileNewInThisWS);
+					if(isFileNewInThisWS){
+						//Ficheiro é novo logo pode receber
+						privateFunctions.receiveFile(inStream, pathname, workspacePath);
+						stringDeResposta = "OK";
+					} else {
+						//Existe um ficheiro com o mesmo nome no servidor
+						stringDeResposta = "Existe um ficheiro com o mesmo nome no servidor";
+					}
+					//Envia resposta ao Cliente ou "OK" ou "Existe um ficheiro com o mesmo nome no servidor"
+					outStream.writeObject(stringDeResposta);
+					stringDeResposta = "";
+			    }
+			    //Se for invalido apenas passar em frente, cliente trata do resto
+			}
+		}
+
+		private void dwSendFiles(ObjectInputStream inputStream, ObjectOutputStream outputStream,
+				String[] arrayDeArgumentos) throws IOException, ClassNotFoundException{
+					
+			String pathFicheiroAtual;
+			File ficheiroAtual;
+			boolean readBool;
+			for (int i = 2; i < arrayDeArgumentos.length; i++) {
+				pathFicheiroAtual = arrayDeArgumentos[1] + File.separator + arrayDeArgumentos[i];
+				ficheiroAtual = new File(pathFicheiroAtual);
+
+				if(ficheiroAtual.exists()){
+					
+					//Enviamos o pathname
+					outputStream.writeObject(arrayDeArgumentos[i]);
+					//Recebe validaºão do client
+					readBool = (boolean) inputStream.readObject();
+					if(readBool){
+						//Validou entao envia ficheiro
+						privateFunctions.sendFile(outputStream, pathFicheiroAtual);
+					} 
+				} else {
+					//envia o "-1" como pathname para simbolizar nao existe no ws ao cliente
+					//(para nao ficar á espera)
+					outputStream.writeObject("-1");
+				}	
+			}
 		}
 	}
 }

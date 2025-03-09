@@ -144,7 +144,7 @@ public class mySharingClient {
                             } 
 
                             //Preparar para receber
-                            downloadFicheiros(inputStream,outputStream,arrayDeArgumentos);
+                            System.out.println(downloadFicheiros(inputStream,outputStream,arrayDeArgumentos)); 
                             doneOperation = true;
                         }
                         break;
@@ -213,34 +213,38 @@ public class mySharingClient {
         
         String filePathAtual;
         boolean isFileNewInThisDir;
-        String stringDeResposta;
         String dirAtual = System.getProperty("user.dir");
+        StringBuilder sBuilder = new StringBuilder("Resposta: ");
         
         //Percorre todos os ficheiros
         for (int i = 2; i < arrayDeArgumentos.length; i++) {
+            //mete no strbuilder o path atual
+            sBuilder.append(arrayDeArgumentos[i]).append(": ");
+            //fica á espera do path para saber se existe no ws
             filePathAtual = (String) inputStream.readObject();
             if(!filePathAtual.equals("-1")){
                 //eh valido (existe no server)
                 //Pasta atual
                 
+                //checka se já existe na sua dir
                 isFileNewInThisDir = !privateFunctions.isFileInWorkspace(filePathAtual, dirAtual);
                 
                 outputStream.writeObject(isFileNewInThisDir);
                 if(isFileNewInThisDir){
                     privateFunctions.receiveFile(inputStream, filePathAtual, null);
-                    stringDeResposta = "OK";
+                    sBuilder.append("OK\n");
                 } else {
                     //Maybe perguntar se ele quer dar override ou cancelar o download para esse ficheiro.
-                    stringDeResposta = "Existe um ficheiro com o mesmo nome na diretoria";
+                    sBuilder.append("Existe um ficheiro com o mesmo nome na diretoria\n"); 
                 }
-                outputStream.writeObject(stringDeResposta);
-                stringDeResposta = "";
+                //Nao deveria ter que mandar resposta
+                //outputStream.writeObject(stringDeResposta);
+            } else {
+                sBuilder.append("Nao existe no WS\n");
             }
-
             //Nao era valido, passa á frente
         }
-        
-        return null;
+        return sBuilder.toString();
     }
 
 
@@ -280,7 +284,7 @@ public class mySharingClient {
                 //(para nao ficar á espera)
                 outputStream.writeObject("-1");
                 //Da logo append da mensagem correta
-                stringBuilder.append("Nao Existe");
+                stringBuilder.append("Nao Existe\n");
             }
         }
         return stringBuilder.toString();

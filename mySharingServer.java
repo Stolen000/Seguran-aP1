@@ -231,7 +231,7 @@ public class mySharingServer{
         }
 
 		private boolean doesUserHavePermsForWS(ObjectOutputStream outStream, String ws, String user) throws IOException {
-			return ws.contains(":" + user) && !ws.contains(", " + user);
+			return ws.contains(":" + user) || ws.contains(", " + user);
 		}
 		
 		private String formatMsg(String[] lista){
@@ -550,6 +550,8 @@ public class mySharingServer{
 						System.out.println("Something went wrong! 311");
 					}
 					
+				} else {
+					tempFile.delete();
 				}
 				
 				return linha;

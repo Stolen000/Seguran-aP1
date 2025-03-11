@@ -139,6 +139,7 @@ public class mySharingClient {
                             String respostaDoServer = (String) inputStream.readObject();
                             //Se nao foi validada a operacao, acabar
                             if(!respostaDoServer.equals("OK")){
+                                System.out.println("Resposta :" + respostaDoServer);
                                 doneOperation = true;
                                 break;
                             } 

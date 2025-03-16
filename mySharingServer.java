@@ -76,7 +76,7 @@ public class mySharingServer{
 
 		ServerThread(Socket inSoc) {
 			socket = inSoc;
-			System.out.println("thread do server para cada cliente");
+			//System.out.println("thread do server para cada cliente");
 		}
  
 		public void run(){
@@ -93,7 +93,7 @@ public class mySharingServer{
 
 				boolean encontrouUser = authentification(outStream, inStream, false, db);
 
-				System.out.println(user);
+				//System.out.println(user);
 				
 			//Servidor tem que manter estruturas de dados com os dados dos users??
 
@@ -103,6 +103,16 @@ public class mySharingServer{
 					String comandoDoCliente = (String) inStream.readObject();
 					String[] arrayDeArgumentos = comandoDoCliente.trim().split(" ");
 					String comando = arrayDeArgumentos[0];
+
+
+					if(comando != null && "CLOSING".equals(comando)){
+						//Cntrl C do cliente
+						System.out.println("Cliente:" + user + " fechou ligacao.");
+						socket.close();
+						//System.out.println("Socket closed.");
+						//Sai do while e acaba
+						break;
+					}
 
 					File workspaceFile = new File("workspaces.txt");
 							if (!workspaceFile.exists()) {
@@ -330,11 +340,11 @@ public class mySharingServer{
 
 				try {
 					user = (String)inStream.readObject();
-					System.out.print("User:" + user);
+					//System.out.print("User:" + user);
 					passwd = (String)inStream.readObject();
-					System.out.print("Pass:" + passwd);
+					//System.out.print("Pass:" + passwd);
 
-					System.out.println("thread: depois de receber a password e o user");
+					//System.out.println("thread: depois de receber a password e o user");
 				}catch (ClassNotFoundException | IOException e) {
 					e.printStackTrace();
 				}

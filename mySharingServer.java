@@ -505,11 +505,10 @@ public class mySharingServer{
 			while (scanner.hasNextLine()) {
 				linha = scanner.nextLine();
 				//Encontrou um workspace com esse nome
-				if (linha.startsWith(workspaceToFind + ":")) {
+				if ((linha.toUpperCase()).startsWith((workspaceToFind.toUpperCase()) + ":")) {
 					//Encontrou ja o ws
 					scanner.close();
 					return linha;
-
 				}
 			}
 			scanner.close();

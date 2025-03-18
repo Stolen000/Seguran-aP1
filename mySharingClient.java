@@ -16,66 +16,47 @@ import java.util.Scanner;
 
 
 public class mySharingClient {
+
+
     public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException{
         System.out.println("cliente : main");
-        
-        
+        if (args.length < 3){
+            System.out.println("Tamanho input invalido"); 
+            System.exit(0);
+        }
+
+        Scanner sc = new Scanner(System.in);
+
         //Recebe os argumentos e guarda o ServerAdress para dar connect, o Porto, o User e a Pass
         String inputs[] = mySharingClient.verifyInput(args);
-        String serverIP = inputs[0];
-        int port = Integer.parseInt(inputs[1]);
-        String user_id = inputs[2];
-        String password = inputs[3];        
-        //
 
 
-        //Open socket
-        int finalPort = (port != -1) ? port : 12345;
-        Socket clientSocket = new Socket(serverIP, finalPort);
-        //----
+        Socket clientSocket = new Socket(inputs[0], Integer.parseInt(inputs[1]));
+
         ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
+
         ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+
+        mySharingClient.startAuthentication(inputStream, outputStream, inputs[2], inputs[3], sc);
+
+        mySharingClient.runClient(inputStream, outputStream, clientSocket, sc);
+
+        sc.close();
+
+    }
+
+    private static void startAuthentication(ObjectInputStream inputStream, ObjectOutputStream outputStream, String username, String password, Scanner scanner){
        
         boolean respostaInvalida = true;
-        String userInputUser;
-        String userInputPassword;
+        String userInputUser = username;
+        String userInputPassword = password;
         String respostaAutentificacao = "";
 
-        Scanner scanner = new Scanner(System.in);
-        userInputUser = user_id;
-        userInputPassword = password;
-
-        //----Handling CRl C
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            public void run() {
-                try {
-                    System.out.println("Shutting down ...");
-                    outputStream.writeObject("CLOSING");
-                    //Faz unstuck da main thread  no nextLine()
-                    System.in.close();
-
-                    
-
-                    outputStream.flush();
-                    inputStream.close();
-                    outputStream.close();
-                    clientSocket.close();
-                } catch (IOException e) {
-                    System.err.println("Error closing socket in shutdown hook: " + e.getMessage());
-                    e.printStackTrace();
-                } catch (NoSuchElementException e){
-                    System.err.println("Scanner closed");
-                }
-            }
-        });
         
         try {
-
             while (respostaInvalida) {
-
                 outputStream.writeObject(userInputUser);
                 outputStream.writeObject(userInputPassword);
-
                 //-----------------Se autentificado corretamente: OK-USER || Se novo user: OK-NEW-USER
                 respostaAutentificacao = (String) inputStream.readObject();   
                 respostaInvalida = respostaAutentificacao.equals("WRONG-PWD");
@@ -83,10 +64,10 @@ public class mySharingClient {
 
                     //Fica a repetir o processo até introduzir a password correta ou um novo user e pass
 
-                    System.out.print("Resposta Invalida, tente novamente (eg: Alberto:benfica): ");
+                    System.out.print("Resposta Invalida, tente novamente (eg: Alberto benfica): ");
                     
                     String input = scanner.nextLine();
-                    String[] credentials = input.split(":");
+                    String[] credentials = input.split(" ");
 
                     userInputUser = credentials[0];
                     userInputPassword = credentials[1];
@@ -98,141 +79,149 @@ public class mySharingClient {
             //Assegurar que a resposta do server é correta
             if(!respostaAutentificacao.equals("OK-NEW-USER") && !respostaAutentificacao.equals("OK-USER")){
                 System.out.println("Resposta de Autentificacao falhada.");
-            } else {
-                //Servidor cria novo workspace e entra no loop de operaçoes ? || encontrou user
+            }        
 
-                //Declaracao de variaveis
-                String inputDoUser;
-                String comando;
-                String[] arrayDeArgumentos;
-
-
-                printMenuDeOperacoes();
-                //Loop das operações
-                while (true) {
-                    //Menu das operacoes
-                
-
-                    //------------------v Input do comando do user
-                    //inputDoUser = new String("CREATE workspace004");
-
-                    boolean doneOperation = false;
-                    System.out.print("Comando: ");
-                    
-                    inputDoUser = scanner.nextLine();
-                    System.out.println();
-                    //In progress:Tratar input
-                    arrayDeArgumentos = inputDoUser.trim().split("\\s+");
-                    comando = arrayDeArgumentos[0];
-
-                    switch (comando) {
-                        //CREATE <ws>
-                        case "CREATE":
-                            if(arrayDeArgumentos.length == 2){
-                                sendAndReceive(inputStream, outputStream, inputDoUser);
-                                doneOperation = true;
-                            } 
-                            break;
-                            //se nao entrar no if ele cai no default
-
-                        //ADD <user1> <ws>
-                        case "ADD":
-                            //precisa de mais tramento? (?)
-                            if(arrayDeArgumentos.length == 3){
-                                sendAndReceive(inputStream, outputStream, inputDoUser);
-                                doneOperation = true;
-                            }
-                            break;
-                        //UP <ws> <file1> ... <filen>
-                        case "UP":
-                            if(arrayDeArgumentos.length >= 3){
-                                //mandou primeira mensagem
-                                outputStream.writeObject(inputDoUser);
-                                String respostaDoServer = (String) inputStream.readObject();
-                                //Se nao foi validada a operacao, acabar
-                                if(!respostaDoServer.equals("OK")){
-                                    doneOperation = true;
-                                    break;
-                                } 
-                                System.out.println(uploadFicheiros(inputStream, outputStream, arrayDeArgumentos));
-                                doneOperation = true;
-                            }    
-                            break;    
-                        //DW <ws> <file1> ... <filen>                
-                        case "DW":
-                            if(arrayDeArgumentos.length >= 3){
-                                //mandou primeira mensagem
-                                outputStream.writeObject(inputDoUser);
-                                String respostaDoServer = (String) inputStream.readObject();
-                                //Se nao foi validada a operacao, acabar
-                                if(!respostaDoServer.equals("OK")){
-                                    System.out.println("Resposta :" + respostaDoServer);
-                                    doneOperation = true;
-                                    break;
-                                } 
-
-                                //Preparar para receber
-                                System.out.println(downloadFicheiros(inputStream,outputStream,arrayDeArgumentos)); 
-                                doneOperation = true;
-                            }
-                            break;
-                        case "RM":
-                            if(arrayDeArgumentos.length >= 3){
-                                sendAndReceive(inputStream, outputStream, inputDoUser);
-                                doneOperation = true;
-                            }
-                            break;
-                        case "LW":
-                            if(arrayDeArgumentos.length == 1){
-                                sendAndReceive(inputStream, outputStream, inputDoUser);
-                                doneOperation = true;
-                            }
-                            break;
-                        case "LS":
-                            if(arrayDeArgumentos.length == 2){
-                                sendAndReceive(inputStream, outputStream, inputDoUser);
-                                doneOperation = true;
-                            }
-                            //mandar msg de erro?
-                            //So n das break fora do if para ele ir pro default e printar o menu
-                            break;
-                        default:
-                            //N faz nada
-                            break;
-                    }
-                    if(!doneOperation){
-                        System.out.println("Comando invalido, tente novamente.");
-                        printMenuDeOperacoes();
-                    }
-                    
-
-                    //------------------^
-
-                
-
-
-
-
-                    //Get comando do user, verificar permissoes para as op UP DW RM e LS;
-
-                    //Create ws, se server aceitar recebe OK, se ja existe o ws recebe NOK
-                    //
-                    
-
-
-                }
-            }
         } catch (Exception e){
-            System.out.println("");
+            System.out.println(e.getMessage());
         } 
-        scanner.close();
 
-        //inputStream.close();
-        //outputStream.close();
-        //----
-        //clientSocket.close();
     }
 
+    private static void runClient(ObjectInputStream inputStream, ObjectOutputStream outputStream, Socket clientSocket, Scanner sc){
+    
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                try {
+                    System.out.println("Shutting down ...");
+                    outputStream.writeObject("CLOSING");
+                    outputStream.flush();
+                    inputStream.close();
+                    outputStream.close();
+                    clientSocket.close();
+                } catch (IOException e) {
+                    System.err.println("Error closing socket in shutdown hook: " + e.getMessage());
+                } catch (NoSuchElementException e) {
+                    System.err.println("Scanner closed");
+                }
+            }
+        });
+        
+        //Servidor cria novo workspace e entra no loop de operaçoes ? || encontrou user
+
+        //Declaracao de variaveis
+        String inputDoUser;
+        String comando;
+        String[] arrayDeArgumentos;
+
+
+        printMenuDeOperacoes();
+        //Loop das operações
+        
+
+        try{
+            while (true) {
+                //Menu das operacoes
+            
+
+                //------------------v Input do comando do user
+                //inputDoUser = new String("CREATE workspace004");
+
+                boolean doneOperation = false;
+                System.out.print("Comando: ");
+                
+                if (!sc.hasNextLine()){
+                    break;
+                }
+                inputDoUser = sc.nextLine();
+                System.out.println();
+                //In progress:Tratar input
+                arrayDeArgumentos = inputDoUser.trim().split("\\s+");
+                comando = arrayDeArgumentos[0];
+
+                switch (comando) {
+                    //CREATE <ws>
+                    case "CREATE":
+                        if(arrayDeArgumentos.length == 2){
+                            sendAndReceive(inputStream, outputStream, inputDoUser);
+                            doneOperation = true;
+                        } 
+                        break;
+                        //se nao entrar no if ele cai no default
+
+                    //ADD <user1> <ws>
+                    case "ADD":
+                        //precisa de mais tramento? (?)
+                        if(arrayDeArgumentos.length == 3){
+                            sendAndReceive(inputStream, outputStream, inputDoUser);
+                            doneOperation = true;
+                        }
+                        break;
+                    //UP <ws> <file1> ... <filen>
+                    case "UP":
+                        if(arrayDeArgumentos.length >= 3){
+                            //mandou primeira mensagem
+                            outputStream.writeObject(inputDoUser);
+                            String respostaDoServer = (String) inputStream.readObject();
+                            //Se nao foi validada a operacao, acabar
+                            if(!respostaDoServer.equals("OK")){
+                                doneOperation = true;
+                                break;
+                            } 
+                            System.out.println(uploadFicheiros(inputStream, outputStream, arrayDeArgumentos));
+                            doneOperation = true;
+                        }    
+                        break;    
+                    //DW <ws> <file1> ... <filen>                
+                    case "DW":
+                        if(arrayDeArgumentos.length >= 3){
+                            //mandou primeira mensagem
+                            outputStream.writeObject(inputDoUser);
+                            String respostaDoServer = (String) inputStream.readObject();
+                            //Se nao foi validada a operacao, acabar
+                            if(!respostaDoServer.equals("OK")){
+                                System.out.println("Resposta :" + respostaDoServer);
+                                doneOperation = true;
+                                break;
+                            } 
+
+                            //Preparar para receber
+                            System.out.println(downloadFicheiros(inputStream,outputStream,arrayDeArgumentos)); 
+                            doneOperation = true;
+                        }
+                        break;
+                    case "RM":
+                        if(arrayDeArgumentos.length >= 3){
+                            sendAndReceive(inputStream, outputStream, inputDoUser);
+                            doneOperation = true;
+                        }
+                        break;
+                    case "LW":
+                        if(arrayDeArgumentos.length == 1){
+                            sendAndReceive(inputStream, outputStream, inputDoUser);
+                            doneOperation = true;
+                        }
+                        break;
+                    case "LS":
+                        if(arrayDeArgumentos.length == 2){
+                            sendAndReceive(inputStream, outputStream, inputDoUser);
+                            doneOperation = true;
+                        }
+                        //mandar msg de erro?
+                        //So n das break fora do if para ele ir pro default e printar o menu
+                        break;
+                    default:
+                        //N faz nada
+                        break;
+                }
+                if(!doneOperation){
+                    System.out.println("Comando invalido, tente novamente.");
+                    printMenuDeOperacoes();
+                }
+            }
+        }catch(IOException | ClassNotFoundException e){
+                System.out.println(e.getMessage());
+        }               
+    }
     private static String downloadFicheiros(ObjectInputStream inputStream, ObjectOutputStream outputStream,
             String[] arrayDeArgumentos) throws ClassNotFoundException, IOException{
         
@@ -337,6 +326,11 @@ public class mySharingClient {
     }
 
 
+    /*
+     * Funcao que coloca os inputs do @args num array de tamanho 4. Input[0] corressponde ao IP_Server. Input[1] corressponde ao porto 
+     * (O default eh 1234 caso nao seja escolhido nenhum). O Input[2] corresponde ao username. O Input[3] corresponde a password.
+     * 
+     */
     private static String[] verifyInput(String args[]){
         String input[] = new String[4];
         String serverAddress = "";
@@ -364,7 +358,8 @@ public class mySharingClient {
             }
 
         } else {
-            System.out.println("Input inválido");
+            System.out.println("Tamanho dos argumentos insuficiente");
+            return new String[1];
         }
 
 

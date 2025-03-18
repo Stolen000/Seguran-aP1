@@ -7,3 +7,5 @@ be:ha
 gui:dias
 alberto:benfica
 Alberto:benfica
+CLOSING:benfic
+Beto:seguranca

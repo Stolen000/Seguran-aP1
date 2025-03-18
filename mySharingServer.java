@@ -83,11 +83,10 @@ public class mySharingServer{
  
 		public void run(){
 
-			ObjectOutputStream outStream;
-			ObjectInputStream inStream;
+
 			try {
-				outStream = new ObjectOutputStream(socket.getOutputStream());
-				inStream = new ObjectInputStream(socket.getInputStream());
+				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
+				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
 
 				//file dos users com passwords
@@ -96,7 +95,7 @@ public class mySharingServer{
 						db.createNewFile();
 					}
 
-				boolean encontrouUser = authentification(outStream, inStream, false, db);
+				authentification(outStream, inStream, false, db);
 
 				//System.out.println(user);
 				
@@ -229,16 +228,6 @@ public class mySharingServer{
 					}
 				}
 
-				//Envia de volta a resposta depois das ops
-				//------------------------------------------------^
-
-				//Tem que ser implementada o ficheiro para guardar os workplaces
-
-				//Closing Stuff
-				//outStream.close();
-				//inStream.close();
-
-				//socket.close();
 				outStream.close();
 				inStream.close();
 				socket.close();
@@ -344,7 +333,7 @@ public class mySharingServer{
 			return suces;
 		}
 
-		private boolean authentification(ObjectOutputStream outStream, ObjectInputStream inStream, boolean findUser, File db) throws ClassNotFoundException{
+		private void authentification(ObjectOutputStream outStream, ObjectInputStream inStream, boolean findUser, File db) throws ClassNotFoundException{
 			boolean encontrouUser = findUser;
 			boolean autentificado = false;
 			while(!autentificado){
@@ -433,7 +422,6 @@ public class mySharingServer{
 				}
 			}
 
-			return encontrouUser;
 		}
 
 		private void create_new_ws(String username, String password){

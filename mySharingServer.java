@@ -69,6 +69,8 @@ public class mySharingServer{
 	//Threads utilizadas para comunicacao com os clientes
 	class ServerThread extends Thread {
 
+
+
 		private Socket socket = null;
 		private String user;
 		private String passwd;
@@ -80,9 +82,12 @@ public class mySharingServer{
 		}
  
 		public void run(){
+
+			ObjectOutputStream outStream;
+			ObjectInputStream inStream;
 			try {
-				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
-				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
+				outStream = new ObjectOutputStream(socket.getOutputStream());
+				inStream = new ObjectInputStream(socket.getInputStream());
 
 
 				//file dos users com passwords
@@ -234,9 +239,15 @@ public class mySharingServer{
 				//inStream.close();
 
 				//socket.close();
+				outStream.close();
+				inStream.close();
+				socket.close();
                 
             } catch (IOException | ClassNotFoundException e) {
+
 				e.printStackTrace();
+
+
 			}
         }
 

@@ -316,15 +316,13 @@ public class mySharingClient {
     }
 
     private static void printMenuDeOperacoes() {
-        StringBuilder sb =  new StringBuilder("Menu:\n").append("CREATE <ws> # Criar um novo workspace - utilizador é Owner.\n")
-                                                        .append("ADD <user1> <ws> # Adicionar utilizador <user1> ao workspace <ws>." 
-                                                        + "A operação ADD só funciona se o utilizador for o Owner do workspace <ws>.\n")
-                                                        .append("UP <ws> <file1> ... <filen> # Adicionar ficheiros ao workspace.\n" )
-                                                        .append("DW <ws> <file1> ... <filen> # Download de ficheiros do workspace para"
-                                                            + "a máquina local.\n")
-                                                        .append("RM <ws> <file1> ... <filen> # Apagar ficheiros do workspace.\n")
-                                                        .append("LW # Lista os workspaces associados ao utilizador.\n")
-                                                        .append("LS <ws> # Lista os ficheiros dentro de um workspace.");
+        StringBuilder sb =  new StringBuilder("Menu:\n").append("CREATE <ws> # Criar um novo workspace.\n")
+                                                        .append("   ADD <user1> <ws> # Adicionar utilizador <user1> ao workspace <ws>.\n") 
+                                                        .append("   UP <ws> <file1> ... <filen> # Adicionar ficheiros ao workspace.\n" )
+                                                        .append("   DW <ws> <file1> ... <filen> # Download de ficheiros do workspace para a maquina local.\n")
+                                                        .append("   RM <ws> <file1> ... <filen> # Apagar ficheiros do workspace.\n")
+                                                        .append("   LW # Lista os workspaces associados ao utilizador.\n")
+                                                        .append("   LS <ws> # Lista os ficheiros dentro de um workspace.");
         System.out.println(sb.toString());
     }
 

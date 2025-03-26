@@ -8,6 +8,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 
@@ -15,84 +16,123 @@ import java.util.Scanner;
 
 
 public class mySharingClient {
+
+
     public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException{
         System.out.println("cliente : main");
-        
-        
-        //Recebe os argumentos e guarda o ServerAdress para dar connect, o Porto, o User e a Pass
-        String inputs[] = mySharingClient.verifyInput(args);
-        String serverIP = inputs[0];
-        int port = Integer.parseInt(inputs[1]);
-        String user_id = inputs[2];
-        String password = inputs[3];        
-        //
-
-
-        //Open socket
-        int finalPort = (port != -1) ? port : 12345;
-        Socket clientSocket = new Socket(serverIP, finalPort);
-        //----
-        ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
-        ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-
-       
-        boolean respostaInvalida = true;
-        String userInputUser;
-        String userInputPassword;
-        String respostaAutentificacao = "";
-
-        Scanner scanner = new Scanner(System.in);
-        userInputUser = user_id;
-        userInputPassword = password;
-
-        while (respostaInvalida) {
-
-            outputStream.writeObject(userInputUser);
-            outputStream.writeObject(userInputPassword);
-
-            //-----------------Se autentificado corretamente: OK-USER || Se novo user: OK-NEW-USER
-            respostaAutentificacao = (String) inputStream.readObject();   
-            respostaInvalida = respostaAutentificacao.equals("WRONG-PWD");
-            if (respostaInvalida) {
-
-                //Fica a repetir o processo até introduzir a password correta ou um novo user e pass
-
-                System.out.print("Resposta Invalida, tente novamente (eg: Alberto:benfica): ");
-                
-                String input = scanner.nextLine();
-                String[] credentials = input.split(":");
-
-                userInputUser = credentials[0];
-                userInputPassword = credentials[1];
-                //System.out.println("Voce digitou: " + input);
-
-            }
+        if (args.length < 3){
+            System.out.println("Tamanho input invalido"); 
+            System.exit(0);
         }
 
-        //Assegurar que a resposta do server é correta
-        if(!respostaAutentificacao.equals("OK-NEW-USER") && !respostaAutentificacao.equals("OK-USER")){
-            System.out.println("Resposta de Autentificacao falhada.");
-        } else {
-            //Servidor cria novo workspace e entra no loop de operaçoes ? || encontrou user
+        Scanner sc = new Scanner(System.in);
 
-            //Declaracao de variaveis
-            String inputDoUser;
-            String comando;
-            String[] arrayDeArgumentos;
+        //Recebe os argumentos e guarda o ServerAdress para dar connect, o Porto, o User e a Pass
+        String inputs[] = mySharingClient.verifyInput(args);
 
 
-            printMenuDeOperacoes();
-            //Loop das operações
+        Socket clientSocket = new Socket(inputs[0], Integer.parseInt(inputs[1]));
+
+        ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
+
+        ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+
+        mySharingClient.startAuthentication(inputStream, outputStream, inputs[2], inputs[3], sc);
+
+        mySharingClient.runClient(inputStream, outputStream, clientSocket, sc);
+
+        sc.close();
+
+    }
+
+    private static void startAuthentication(ObjectInputStream inputStream, ObjectOutputStream outputStream, String username, String password, Scanner scanner){
+       
+        boolean respostaInvalida = true;
+        String userInputUser = username;
+        String userInputPassword = password;
+        String respostaAutentificacao = "";
+
+        
+        try {
+            while (respostaInvalida) {
+                outputStream.writeObject(userInputUser);
+                outputStream.writeObject(userInputPassword);
+                //-----------------Se autentificado corretamente: OK-USER || Se novo user: OK-NEW-USER
+                respostaAutentificacao = (String) inputStream.readObject();   
+                respostaInvalida = respostaAutentificacao.equals("WRONG-PWD");
+                if (respostaInvalida) {
+
+                    //Fica a repetir o processo até introduzir a password correta ou um novo user e pass
+
+                    System.out.print("Resposta Invalida, tente novamente (eg: Alberto benfica): ");
+                    
+                    String input = scanner.nextLine();
+                    String[] credentials = input.split(" ");
+
+                    userInputUser = credentials[0];
+                    userInputPassword = credentials[1];
+                    //System.out.println("Voce digitou: " + input);
+
+                }
+            }
+
+            //Assegurar que a resposta do server é correta
+            if(!respostaAutentificacao.equals("OK-NEW-USER") && !respostaAutentificacao.equals("OK-USER")){
+                System.out.println("Resposta de Autentificacao falhada.");
+            }        
+
+        } catch (Exception e){
+            System.out.println(e.getMessage());
+        } 
+
+    }
+
+    private static void runClient(ObjectInputStream inputStream, ObjectOutputStream outputStream, Socket clientSocket, Scanner sc){
+    
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                try {
+                    System.out.println("Shutting down ...");
+                    outputStream.writeObject("CLOSING");
+                    outputStream.flush();
+                    inputStream.close();
+                    outputStream.close();
+                    clientSocket.close();
+                } catch (IOException e) {
+                    System.err.println("Error closing socket in shutdown hook: " + e.getMessage());
+                } catch (NoSuchElementException e) {
+                    System.err.println("Scanner closed");
+                }
+            }
+        });
+        
+        //Servidor cria novo workspace e entra no loop de operaçoes ? || encontrou user
+
+        //Declaracao de variaveis
+        String inputDoUser;
+        String comando;
+        String[] arrayDeArgumentos;
+
+
+        printMenuDeOperacoes();
+        //Loop das operações
+        
+
+        try{
             while (true) {
                 //Menu das operacoes
-               
+            
 
                 //------------------v Input do comando do user
                 //inputDoUser = new String("CREATE workspace004");
 
                 boolean doneOperation = false;
                 System.out.print("Comando: ");
-                inputDoUser = scanner.nextLine();
+                
+                if (!sc.hasNextLine()){
+                    break;
+                }
+                inputDoUser = sc.nextLine();
                 System.out.println();
                 //In progress:Tratar input
                 arrayDeArgumentos = inputDoUser.trim().split("\\s+");
@@ -177,38 +217,11 @@ public class mySharingClient {
                     System.out.println("Comando invalido, tente novamente.");
                     printMenuDeOperacoes();
                 }
-                
-
-                //------------------^
-
-               
-
-
-
-
-                //Get comando do user, verificar permissoes para as op UP DW RM e LS;
-
-                //Create ws, se server aceitar recebe OK, se ja existe o ws recebe NOK
-                //
-                
-
-
             }
-        }
-
-
-        
-
-
-
-        scanner.close();
-
-        inputStream.close();
-        outputStream.close();
-        //----
-        clientSocket.close();
+        }catch(IOException | ClassNotFoundException e){
+                System.out.println(e.getMessage());
+        }               
     }
-
     private static String downloadFicheiros(ObjectInputStream inputStream, ObjectOutputStream outputStream,
             String[] arrayDeArgumentos) throws ClassNotFoundException, IOException{
         
@@ -292,15 +305,13 @@ public class mySharingClient {
     }
 
     private static void printMenuDeOperacoes() {
-        StringBuilder sb =  new StringBuilder("Menu:\n").append("CREATE <ws> # Criar um novo workspace - utilizador é Owner.\n")
-                                                        .append("ADD <user1> <ws> # Adicionar utilizador <user1> ao workspace <ws>." 
-                                                        + "A operação ADD só funciona se o utilizador for o Owner do workspace <ws>.\n")
-                                                        .append("UP <ws> <file1> ... <filen> # Adicionar ficheiros ao workspace.\n" )
-                                                        .append("DW <ws> <file1> ... <filen> # Download de ficheiros do workspace para"
-                                                            + "a máquina local.\n")
-                                                        .append("RM <ws> <file1> ... <filen> # Apagar ficheiros do workspace.\n")
-                                                        .append("LW # Lista os workspaces associados ao utilizador.\n")
-                                                        .append("LS <ws> # Lista os ficheiros dentro de um workspace.");
+        StringBuilder sb =  new StringBuilder("Menu:\n").append("CREATE <ws> # Criar um novo workspace.\n")
+                                                        .append("   ADD <user1> <ws> # Adicionar utilizador <user1> ao workspace <ws>.\n") 
+                                                        .append("   UP <ws> <file1> ... <filen> # Adicionar ficheiros ao workspace.\n" )
+                                                        .append("   DW <ws> <file1> ... <filen> # Download de ficheiros do workspace para a maquina local.\n")
+                                                        .append("   RM <ws> <file1> ... <filen> # Apagar ficheiros do workspace.\n")
+                                                        .append("   LW # Lista os workspaces associados ao utilizador.\n")
+                                                        .append("   LS <ws> # Lista os ficheiros dentro de um workspace.");
         System.out.println(sb.toString());
     }
 
@@ -315,6 +326,11 @@ public class mySharingClient {
     }
 
 
+    /*
+     * Funcao que coloca os inputs do @args num array de tamanho 4. Input[0] corressponde ao IP_Server. Input[1] corressponde ao porto 
+     * (O default eh 1234 caso nao seja escolhido nenhum). O Input[2] corresponde ao username. O Input[3] corresponde a password.
+     * 
+     */
     private static String[] verifyInput(String args[]){
         String input[] = new String[4];
         String serverAddress = "";
@@ -342,7 +358,8 @@ public class mySharingClient {
             }
 
         } else {
-            System.out.println("Input inválido");
+            System.out.println("Tamanho dos argumentos insuficiente");
+            return new String[1];
         }
 
 

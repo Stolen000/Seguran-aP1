@@ -138,7 +138,11 @@ public class mySharingServer{
 									//encontrou ws com o nome dado
 									outStream.writeObject("NOK");
 									break;
-								} 
+								} else if(arrayDeArgumentos[1].startsWith("AutoWorkspace-")){
+									System.out.println("Nao podes criar workspaces com nome generico");
+									outStream.writeObject("NOK");
+									break;
+								}
 								escreveLinhaNovaDoWsFile(arrayDeArgumentos[1],user);
 								outStream.writeObject("OK");
 								break;
@@ -368,7 +372,7 @@ public class mySharingServer{
 							}
 							outStream.writeObject("OK-NEW-USER");
 							System.out.println("NOVO USER!!! UPI");;
-							create_new_ws(user,passwd);
+							create_new_ws(user);
 							autentificado = true;
 							
 
@@ -381,6 +385,8 @@ public class mySharingServer{
 										String username = parts[0].trim();
 										String password = parts[1].trim();
 										
+
+
 										if (username.equals(user)) {
 											if(password.equals(passwd)){
 												outStream.writeObject("OK-USER"); //User encontrado
@@ -399,17 +405,21 @@ public class mySharingServer{
 								//	outStream.writeObject(linha.trim().contains(":" + passwd) ? "OK-USER" : "WRONG-PWD"); //User encontrado : Invalido
 								//			encontrouUser = true;
 								//}
-							}
-							if (!encontrouUser) {
-								sb.append(user).append(":").append(passwd).append(System.lineSeparator());
-								try (FileWriter writer = new FileWriter(db, true)) {
-									writer.write(sb.toString());
+
+								if (!encontrouUser ) {
+
+									
+									sb.append(user).append(":").append(passwd).append(System.lineSeparator());
+									try (FileWriter writer = new FileWriter(db, true)) {
+										writer.write(sb.toString());
+									}
+									outStream.writeObject("OK-NEW-USER"); // User novo
+									System.out.println("NOVO USER!!! UPI");;
+									create_new_ws(user);
+									autentificado = true;
 								}
-								outStream.writeObject("OK-NEW-USER"); // User novo
-								System.out.println("NOVO USER!!! UPI");;
-								create_new_ws(user,passwd);
-								autentificado = true;
 							}
+
 						}
 			
 						sc.close();
@@ -424,9 +434,7 @@ public class mySharingServer{
 
 		}
 
-		private void create_new_ws(String username, String password){
-			int index = lastAutoWS_id;
-			boolean created = false;
+		private void create_new_ws(String username){
 			StringBuilder sb = new StringBuilder();
 			System.out.println("Estou aqui a criar uma nova workspace para o: " + username);
 			try{
@@ -435,41 +443,12 @@ public class mySharingServer{
 					workspaceFile.createNewFile();
 				}
 				Scanner sc = new Scanner(workspaceFile);
-				System.out.println(index);
-				System.out.println(sc.hasNextLine());
-				while(sc.hasNextLine() && !created){
-					String nextLine = sc.nextLine();
-					if(nextLine.startsWith("workspace" + String.valueOf(index) + ":")){
-						index++;
-						System.out.println("Estou aqui com index iguais");
-					}else{
-						sb.append("workspace").append(String.valueOf(index)).append(":").append(username)
-						.append(">").append(username)
-						.append(System.lineSeparator());
-						try (FileWriter writer = new FileWriter(workspaceFile)) {
-							writer.write(sb.toString());
-						}
-						lastAutoWS_id = index;
-						created = true;
-					};
-				}
-				if(!created){
-					System.out.println("Estou aqui a criar uma nova workspace porque cheguei ao fim do txt");
-					sb.append("workspace").append(String.valueOf(index)).append(":").append(username)
-					.append(">").append(username)
-					.append(System.lineSeparator());
-					try (FileWriter writer = new FileWriter(workspaceFile, true)) {
-						writer.write(sb.toString());
-					}
-					lastAutoWS_id = index;
-				}
+				sb.append("AutoWorkspace-").append(username);
+				escreveLinhaNovaDoWsFile(sb.toString(),username);
 				sc.close();
 			}catch(IOException e){
 				e.printStackTrace();
 			}
-
-
-
 		}
 
 

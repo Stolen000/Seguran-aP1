@@ -1,3 +1,0 @@
-workspace1:Alberto>Alberto
-workspace2:CLOSING>CLOSING
-workspace3:Beto>Beto

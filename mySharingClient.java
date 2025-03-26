@@ -28,7 +28,7 @@ public class mySharingClient {
         Scanner sc = new Scanner(System.in);
 
         //Recebe os argumentos e guarda o ServerAdress para dar connect, o Porto, o User e a Pass
-        String inputs[] = mySharingClient.verifyInput(args);
+        String inputs[] = mySharingClient.verifyInput(args, sc);
 
 
         Socket clientSocket = new Socket(inputs[0], Integer.parseInt(inputs[1]));
@@ -66,8 +66,7 @@ public class mySharingClient {
 
                     System.out.print("Resposta Invalida, tente novamente (eg: Alberto benfica): ");
                     
-                    String input = scanner.nextLine();
-                    String[] credentials = input.split(" ");
+                    String[] credentials = getValidCredentials(scanner);
 
                     userInputUser = credentials[0];
                     userInputPassword = credentials[1];
@@ -331,7 +330,7 @@ public class mySharingClient {
      * (O default eh 1234 caso nao seja escolhido nenhum). O Input[2] corresponde ao username. O Input[3] corresponde a password.
      * 
      */
-    private static String[] verifyInput(String args[]){
+    private static String[] verifyInput(String args[], Scanner sc){
         String input[] = new String[4];
         String serverAddress = "";
         String serverIP = "localHost";
@@ -353,6 +352,7 @@ public class mySharingClient {
 
                 user_id = args[1];
                 password = args[2];
+
             } catch (NumberFormatException e){
                 System.out.println("Porto não é um número válido");
             }
@@ -361,7 +361,9 @@ public class mySharingClient {
             System.out.println("Tamanho dos argumentos insuficiente");
             return new String[1];
         }
-
+        String[] credentials = getValidCredentials(sc, user_id, password);
+        user_id = credentials[0];
+        password = credentials[1];
 
         input[0] = serverIP;
         input[1] = String.valueOf(port);
@@ -369,4 +371,67 @@ public class mySharingClient {
         input[3] = password;
         return input;
     }
+
+    private static boolean isAlphanumeric(String str) {
+        return str.matches("[a-zA-Z0-9]+");
+    }
+    
+
+    /*
+     * Ha duas versoes desta funcao. Esta recebe uns inputs inicias para verificar e depois mantem o loop ate
+     * ser escrito no terminal inputs validos
+     */
+    private static String[] getValidCredentials(Scanner sc, String user_id, String password) {
+        while (!isAlphanumeric(user_id) || !isAlphanumeric(password)) {
+            System.out.println("Erro: user_id e password devem conter apenas letras e numeros.");
+            System.out.print("Introduza um user e uma password separados por espaco:");
+            
+            String inputLine = sc.nextLine().trim();
+            String[] parts = inputLine.split("\\s+", 2); // Divide no máximo em 2 partes
+    
+            if (parts.length < 2) {
+                System.out.print("Erro: precisa de inserir um user e uma password separados por espaco.");
+                continue;
+            }
+    
+            user_id = parts[0];
+            password = parts[1];
+        }
+    
+        return new String[]{user_id, password};
+    }
+
+    /*
+     * Ha duas versoes desta funcao. Esta recebe apenas o scanner e espera por inputa validos
+     */
+    private static String[] getValidCredentials(Scanner sc) {
+        String user_id = "";
+        String password = "";
+    
+        while (true) {
+            System.out.println("Introduza um user_id e uma password separados por espaco:");
+            String inputLine = sc.nextLine().trim();
+            String[] parts = inputLine.split("\\s+", 2); // Divide no máximo em 2 partes
+    
+            if (parts.length < 2) {
+                System.out.print("Erro: precisa de inserir um user e uma password separados por espaco.");
+                continue;
+            }
+    
+            user_id = parts[0];
+            password = parts[1];
+    
+            if (!user_id.matches("[a-zA-Z0-9]+") || !password.matches("[a-zA-Z0-9]+")) {
+                System.out.print("Erro: user e password devem conter apenas letras e numeros.");
+                continue;
+            }
+    
+            break; // Se chegou aqui, os valores são válidos
+        }
+    
+        return new String[]{user_id, password};
+    }
+    
+    
+    
 }

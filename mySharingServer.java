@@ -74,7 +74,6 @@ public class mySharingServer{
 		private Socket socket = null;
 		private String user;
 		private String passwd;
-		private int lastAutoWS_id = 1;
 
 		ServerThread(Socket inSoc) {
 			socket = inSoc;
@@ -399,25 +398,20 @@ public class mySharingServer{
 									}
 								}
 
-								//-------Codigo que pode substituir o de cima, porém um pouco menos "seguro" ja que so checka por ":" mas nao quantos :(
-								
-								//if(linha.startsWith(user + ":")){
-								//	outStream.writeObject(linha.trim().contains(":" + passwd) ? "OK-USER" : "WRONG-PWD"); //User encontrado : Invalido
-								//			encontrouUser = true;
-								//}
 
-								if (!encontrouUser ) {
+							}
+
+							if (!encontrouUser ) {
 
 									
-									sb.append(user).append(":").append(passwd).append(System.lineSeparator());
-									try (FileWriter writer = new FileWriter(db, true)) {
-										writer.write(sb.toString());
-									}
-									outStream.writeObject("OK-NEW-USER"); // User novo
-									System.out.println("NOVO USER!!! UPI");;
-									create_new_ws(user);
-									autentificado = true;
+								sb.append(user).append(":").append(passwd).append(System.lineSeparator());
+								try (FileWriter writer = new FileWriter(db, true)) {
+									writer.write(sb.toString());
 								}
+								outStream.writeObject("OK-NEW-USER"); // User novo
+								System.out.println("NOVO USER!!! UPI PORQUE NAO ENCONTROU NENHUM");;
+								create_new_ws(user);
+								autentificado = true;
 							}
 
 						}
@@ -442,10 +436,10 @@ public class mySharingServer{
 				if (!workspaceFile.exists()) {
 					workspaceFile.createNewFile();
 				}
-				Scanner sc = new Scanner(workspaceFile);
+
 				sb.append("AutoWorkspace-").append(username);
 				escreveLinhaNovaDoWsFile(sb.toString(),username);
-				sc.close();
+				
 			}catch(IOException e){
 				e.printStackTrace();
 			}

@@ -1,0 +1,5 @@
+AutoWorkspace-gui:gui>gui
+AutoWorkspace-andre:andre>andre
+AutoWorkspace-carolina:carolina>carolina
+wsGui:gui>gui, andre
+carol:carolina>carolina, gui, andre

@@ -406,18 +406,18 @@ public class mySharingServer{
 								//			encontrouUser = true;
 								//}
 
-								if (!encontrouUser ) {
+							}
+							if (!encontrouUser ) {
 
 									
-									sb.append(user).append(":").append(passwd).append(System.lineSeparator());
-									try (FileWriter writer = new FileWriter(db, true)) {
-										writer.write(sb.toString());
-									}
-									outStream.writeObject("OK-NEW-USER"); // User novo
-									System.out.println("NOVO USER!!! UPI");;
-									create_new_ws(user);
-									autentificado = true;
+								sb.append(user).append(":").append(passwd).append(System.lineSeparator());
+								try (FileWriter writer = new FileWriter(db, true)) {
+									writer.write(sb.toString());
 								}
+								outStream.writeObject("OK-NEW-USER"); // User novo
+								System.out.println("NOVO USER!!! UPI");;
+								create_new_ws(user);
+								autentificado = true;
 							}
 
 						}
@@ -495,40 +495,62 @@ public class mySharingServer{
     
 
 		//Metodo do ADD, retorna o output para mandar ao servidor
-		//NOPERM se user nao for owner do ws
+		//NOPERM se user nao for owner do ws ou se userToAdd ja estah no ws
 		//NOWS se nao existir o ws 
 		//Retorna OK se sucesso
 		private String addUserToWS(String workspace, String userToAdd, String user) throws IOException{
-			boolean foundAndOwner = false;
 			File wsFile = new File("workspaces.txt");
 			Scanner scanner = new Scanner(wsFile);
 			File tempFile = new File("temp.txt");
 			try (PrintWriter writer = new PrintWriter(new FileWriter(tempFile))) {
 				String linha;
+                //se user a dar Add eh owner do ws
+                boolean ownerValid = false;
+                //se user a adicionar nao pertence ja ao ws
+                boolean userToAddValid = true;
+
+                //se encontra @param workspace em workspaces.txt
+                boolean foundWs = false;
 
 				while (scanner.hasNextLine()) {
 					linha = scanner.nextLine();
 					//Encontrou um workspace com esse nome
 					if (linha.startsWith(workspace + ":")) {
-						if(!linha.startsWith(workspace + ":" + user)){
-							//O user não é owner
-							scanner.close();
-							return "NOPERM";
-						} else {
-							//É o owner ent faz a add do user
-							linha += ", " + userToAdd;
-							foundAndOwner = true;
-						}
+                        foundWs = true;
+
+						//formato wsName:owner>user/owner, user1, user2
+                        //separar linha em: wsName:owner>owner || user1 || user2
+                        String[] usersInWs = linha.split(", ");
+
+                        //verificar o owner
+                        String[] isOwner = usersInWs[0].split(">");
+                        //wsName:owner>owner dividido em wsName:owner> || owner
+                        ownerValid = isOwner[1].equals(user);
+
+                        //verificar users
+                        for(String userInWs : usersInWs){
+                            if(userInWs.equals(userToAdd)){
+                                userToAddValid = false;
+                            }
+                        }
+                        if(userToAddValid){
+                            linha += ", " + userToAdd;
+                        }
+
 					}
 					writer.println(linha);
 				}
 				writer.close();
-
-				if(foundAndOwner){
-					linha = "OK";
-				} else{
+                linha = "";
+				if(!ownerValid || !userToAddValid){
+                    linha = "NOPERM";
+				} else if(!foundWs){
 					linha = "NOWS";
-				}		
+				}
+                else{
+                    linha = "OK";
+                }
+
 				scanner.close();
 				if (linha.equals("OK")) {
 					if(wsFile.delete()){
@@ -540,7 +562,6 @@ public class mySharingServer{
 				} else {
 					tempFile.delete();
 				}
-				
 				return linha;
 			}
 		}

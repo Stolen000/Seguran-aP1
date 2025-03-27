@@ -16,28 +16,28 @@ import java.util.Scanner;
 
 
 public class mySharingClient {
-
-
-    public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException{
-        System.out.println("cliente : main");
-        if (args.length < 3){
-            System.out.println("Tamanho input invalido"); 
-            System.exit(0);
-        }
-
-        Scanner sc = new Scanner(System.in);
-
-        //Recebe os argumentos e guarda o ServerAdress para dar connect, o Porto, o User e a Pass
-        String inputs[] = mySharingClient.verifyInput(args, sc);
-
-
-        Socket clientSocket = new Socket(inputs[0], Integer.parseInt(inputs[1]));
-
-        ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
-
-        ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-
-        mySharingClient.startAuthentication(inputStream, outputStream, inputs[2], inputs[3], sc);
+    private static boolean isUserCorrect;
+    
+        public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException{
+            System.out.println("cliente : main");
+            if (args.length < 3){
+                System.out.println("Tamanho input invalido"); 
+                System.exit(0);
+            }
+    
+            Scanner sc = new Scanner(System.in);
+    
+            //Recebe os argumentos e guarda o ServerAdress para dar connect, o Porto, o User e a Pass
+            String inputs[] = mySharingClient.verifyInput(args, sc);
+    
+    
+            Socket clientSocket = new Socket(inputs[0], Integer.parseInt(inputs[1]));
+    
+            ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
+    
+            ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+    
+            isUserCorrect = mySharingClient.startAuthentication(inputStream, outputStream, inputs[2], inputs[3], sc);
 
         mySharingClient.runClient(inputStream, outputStream, clientSocket, sc);
 
@@ -45,7 +45,7 @@ public class mySharingClient {
 
     }
 
-    private static void startAuthentication(ObjectInputStream inputStream, ObjectOutputStream outputStream, String username, String password, Scanner scanner){
+    private static boolean startAuthentication(ObjectInputStream inputStream, ObjectOutputStream outputStream, String username, String password, Scanner scanner){
        
         boolean respostaInvalida = true;
         String userInputUser = username;
@@ -65,12 +65,10 @@ public class mySharingClient {
                     //Fica a repetir o processo até introduzir a password correta ou um novo user e pass
 
                     System.out.print("Resposta Invalida, tente novamente (eg: Alberto benfica): ");
-                    
                     String[] credentials = getValidCredentials(scanner);
-
                     userInputUser = credentials[0];
                     userInputPassword = credentials[1];
-                    //System.out.println("Voce digitou: " + input);
+                    //System.out.println("\nVoce digitou: " + userInputUser + "\n" + userInputPassword);
 
                 }
             }
@@ -81,9 +79,10 @@ public class mySharingClient {
             }        
 
         } catch (Exception e){
-            System.out.println(e.getMessage());
+            //System.out.println(e.getMessage());
+            return false;
         } 
-
+        return true;
     }
 
     private static void runClient(ObjectInputStream inputStream, ObjectOutputStream outputStream, Socket clientSocket, Scanner sc){
@@ -97,6 +96,7 @@ public class mySharingClient {
                     inputStream.close();
                     outputStream.close();
                     clientSocket.close();
+                    sc.close();
                 } catch (IOException e) {
                     System.err.println("Error closing socket in shutdown hook: " + e.getMessage());
                 } catch (NoSuchElementException e) {
@@ -105,8 +105,11 @@ public class mySharingClient {
             }
         });
         
-        //Servidor cria novo workspace e entra no loop de operaçoes ? || encontrou user
+        if(!isUserCorrect){
+            return;
+        }
 
+        //Servidor cria novo workspace e entra no loop de operaçoes ? || encontrou user
         //Declaracao de variaveis
         String inputDoUser;
         String comando;
@@ -410,14 +413,15 @@ public class mySharingClient {
     
         while (true) {
             System.out.println("Introduza um user_id e uma password separados por espaco:");
+
             String inputLine = sc.nextLine().trim();
+           
             String[] parts = inputLine.split("\\s+", 2); // Divide no máximo em 2 partes
     
             if (parts.length < 2) {
                 System.out.print("Erro: precisa de inserir um user e uma password separados por espaco.");
                 continue;
             }
-    
             user_id = parts[0];
             password = parts[1];
     

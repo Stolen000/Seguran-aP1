@@ -106,14 +106,18 @@ public class mySharingServer{
 				if (!megaFold.exists()) {
 					megaFold.mkdir();
 				}
-				authentification(outStream, inStream, false, db);
+				String isUserAuth = authentification(outStream, inStream, false, db);
 
-				//System.out.println(user);
 				
 			//Servidor tem que manter estruturas de dados com os dados dos users??
 
 			//------------------------------------------------v
 				while (true) {
+					if(isUserAuth.equals("CLOSING")){
+						System.out.println("Cliente: unknown fechou ligacao.");
+						socket.close();
+						break;
+					}
 					//Servidor espera pelo commando do cliente
 					String comandoDoCliente = (String) inStream.readObject();
 					String[] arrayDeArgumentos = comandoDoCliente.trim().split(" ");
@@ -344,7 +348,7 @@ public class mySharingServer{
 			return suces;
 		}
 
-		private void authentification(ObjectOutputStream outStream, ObjectInputStream inStream, boolean findUser, File db) throws ClassNotFoundException{
+		private String authentification(ObjectOutputStream outStream, ObjectInputStream inStream, boolean findUser, File db) throws ClassNotFoundException{
 			boolean encontrouUser = findUser;
 			boolean autentificado = false;
 			while(!autentificado){
@@ -352,6 +356,9 @@ public class mySharingServer{
 				try {
 					user = (String)inStream.readObject();
 					//System.out.print("User:" + user);
+					if(user.equals("CLOSING")){
+						return user;
+					}
 					passwd = (String)inStream.readObject();
 					//System.out.print("Pass:" + passwd);
 
@@ -414,8 +421,6 @@ public class mySharingServer{
 						}
 
 						if (!encontrouUser ) {
-
-									
 							sb.append(user).append(":").append(passwd).append(System.lineSeparator());
 							try (FileWriter writer = new FileWriter(db, true)) {
 								writer.write(sb.toString());
@@ -435,7 +440,7 @@ public class mySharingServer{
 					e.printStackTrace();
 				}
 			}
-
+			return autentificado ? "true" : "false";
 		}
 
 		private void create_new_ws(String username){

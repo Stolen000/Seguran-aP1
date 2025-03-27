@@ -421,7 +421,7 @@ public class mySharingClient {
             user_id = parts[0];
             password = parts[1];
     
-            if (isAlphanumeric(user_id) || isAlphanumeric(password)) {
+            if (!isAlphanumeric(user_id) || !isAlphanumeric(password)) {
                 System.out.print("Erro: user e password devem conter apenas letras e numeros.");
                 continue;
             }

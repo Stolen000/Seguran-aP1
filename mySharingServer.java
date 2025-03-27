@@ -405,7 +405,7 @@ public class mySharingServer{
 										}
 
 
-										if (username.toUpperCase().equals(user.toUpperCase())){
+										if (username.toUpperCase().equals(user.toUpperCase()) && !encontrouUser){
 											encontrouUser = true;
 											System.out.println("User com caracteres iguais");
 											outStream.writeObject("WRONG-PWD");

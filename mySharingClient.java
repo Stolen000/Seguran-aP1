@@ -409,7 +409,7 @@ public class mySharingClient {
         String password = "";
     
         while (true) {
-            System.out.println("Introduza um user_id e uma password separados por espaco:");
+            //System.out.println("Introduza um user_id e uma password separados por espaco:");
             String inputLine = sc.nextLine().trim();
             String[] parts = inputLine.split("\\s+", 2); // Divide no máximo em 2 partes
     
@@ -421,7 +421,7 @@ public class mySharingClient {
             user_id = parts[0];
             password = parts[1];
     
-            if (!user_id.matches("[a-zA-Z0-9]+") || !password.matches("[a-zA-Z0-9]+")) {
+            if (isAlphanumeric(user_id) || isAlphanumeric(password)) {
                 System.out.print("Erro: user e password devem conter apenas letras e numeros.");
                 continue;
             }

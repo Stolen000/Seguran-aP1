@@ -74,6 +74,7 @@ public class mySharingServer{
 		private Socket socket = null;
 		private String user;
 		private String passwd;
+		private String megaFolderStr = "workspacesFolder";
 
 		ServerThread(Socket inSoc) {
 			socket = inSoc;
@@ -88,12 +89,23 @@ public class mySharingServer{
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
 
+				
 				//file dos users com passwords
 				File db = new File("users.txt");
-					if (!db.exists()) {
-						db.createNewFile();
-					}
+				if (!db.exists()) {
+					db.createNewFile();
+				}
 
+				File workspaceFile = new File("workspaces.txt");
+				if (!workspaceFile.exists()) {
+					workspaceFile.createNewFile();
+				}
+
+				//file dos users com passwords
+				File megaFold = new File(megaFolderStr);
+				if (!megaFold.exists()) {
+					megaFold.mkdir();
+				}
 				authentification(outStream, inStream, false, db);
 
 				//System.out.println(user);
@@ -116,12 +128,6 @@ public class mySharingServer{
 						//Sai do while e acaba
 						break;
 					}
-
-					File workspaceFile = new File("workspaces.txt");
-							if (!workspaceFile.exists()) {
-								workspaceFile.createNewFile();
-							}
-
 					switch (comando) {
 						//CREATE <ws>
 						case "CREATE":
@@ -220,7 +226,7 @@ public class mySharingServer{
 							break;
 
 						case "LS":
-							String filepath = arrayDeArgumentos[1] + File.separator;
+							String filepath = megaFolderStr + File.separator + arrayDeArgumentos[1];
 							File wsFolder = new File(filepath);
 							String [] files = wsFolder.list();
 							outStream.writeObject(formatMsg(files));
@@ -273,7 +279,7 @@ public class mySharingServer{
 			//files
 				//file existe
 			//apagar file																								funciona este print apenas para 1 file a rm
-			System.out.println("entrei no remove function com os argumentos ws e file = " + arrayDeArgumentos[1] + " e " + arrayDeArgumentos[2]);
+			//System.out.println("entrei no remove function com os argumentos ws e file = " + arrayDeArgumentos[1] + " e " + arrayDeArgumentos[2]);
 
 			List <String> userWs = ListOfAssociatedWS(user);
 			StringBuilder sb = new StringBuilder();
@@ -325,7 +331,9 @@ public class mySharingServer{
 
 		private boolean removeFile(String ws, String fileName){
 			boolean suces = false;
-			String filepath = ws + File.separator + fileName;
+			StringBuilder sb = new StringBuilder(megaFolderStr).append(File.separator)
+										.append(ws).append(File.separator).append(fileName);
+			String filepath = sb.toString();
 			System.out.println("o file a deletar tem filepath = " + filepath);
 			File toRemove = new File(filepath);
 			if(toRemove.exists()){
@@ -565,7 +573,7 @@ public class mySharingServer{
 		private void escreveLinhaNovaDoWsFile(String workspaceName, String user) throws IOException{
 			File wsfile = new File("workspaces.txt");
 			//nao devia ser criada aqui, mas so para assegurar
-			File wsPath = new File(workspaceName);
+			File wsPath = new File(megaFolderStr + File.separator + workspaceName);
 			if(!wsPath.exists()){
 				wsPath.mkdir();
 			}
@@ -614,12 +622,17 @@ public class mySharingServer{
 			String pathFicheiroAtual;
 			File ficheiroAtual;
 			boolean readBool;
+			StringBuilder pathFicheiroAtualSb = new StringBuilder();
 			for (int i = 2; i < arrayDeArgumentos.length; i++) {
-				pathFicheiroAtual = arrayDeArgumentos[1] + File.separator + arrayDeArgumentos[i];
+				pathFicheiroAtualSb.append(megaFolderStr)
+								.append(File.separator)
+								.append(arrayDeArgumentos[1])
+								.append(File.separator)
+								.append(arrayDeArgumentos[i]);
+				pathFicheiroAtual = pathFicheiroAtualSb.toString();
 				ficheiroAtual = new File(pathFicheiroAtual);
 
 				if(ficheiroAtual.exists()){
-					
 					//Enviamos o pathname
 					outputStream.writeObject(arrayDeArgumentos[i]);
 					//Recebe validaºão do client

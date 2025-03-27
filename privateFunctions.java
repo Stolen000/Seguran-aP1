@@ -44,12 +44,9 @@ public class privateFunctions {
 
             //Se workspace for null ele mete so na pasta em que esta
             if(workspace != null){
-                pathname = workspace + File.separator + pathname;
-                File workspaceFolder = new File(workspace);
-                //nao devia ser criada aqui, mas so para assegurar
-                if(!workspaceFolder.exists()){
-                    workspaceFolder.mkdir();
-                }
+				File workspaceFolder = new File("workspacesFolder" + File.separator + workspace);
+				
+                pathname = "workspacesFolder"+ File.separator + workspace + File.separator + pathname;
             } 
             //Criar o ficheiro
 			File file = new File(pathname);
@@ -92,7 +89,7 @@ public class privateFunctions {
 		}
 
         private static boolean isFileInWorkspacePriv(String filePathName, String workspacePath) {
-			File worskspaceFile = new File(workspacePath);
+			File worskspaceFile = new File("workspacesFolder" + File.separator + workspacePath);
 			String[] filesInWs = worskspaceFile.list();
 			if(filesInWs != null && Arrays.asList(filesInWs).contains(filePathName)){
 				return true;

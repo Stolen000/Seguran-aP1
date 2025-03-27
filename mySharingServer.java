@@ -410,6 +410,13 @@ public class mySharingServer{
 											}
 											encontrouUser = true;
 										}
+
+
+										if (username.toUpperCase().equals(user.toUpperCase()) && !encontrouUser){
+											encontrouUser = true;
+											System.out.println("User com caracteres iguais");
+											outStream.writeObject("WRONG-PWD");
+										}
 									}
 								}
 
@@ -420,7 +427,9 @@ public class mySharingServer{
 
 						}
 
-						if (!encontrouUser ) {
+						if (!encontrouUser && !autentificado) {
+
+									
 							sb.append(user).append(":").append(passwd).append(System.lineSeparator());
 							try (FileWriter writer = new FileWriter(db, true)) {
 								writer.write(sb.toString());

@@ -20,7 +20,7 @@ public class mySharingClient {
         public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException{
             System.out.println("cliente : main");
             if (args.length < 3){
-                System.out.println("Tamanho input invalido"); 
+                System.out.println("Input invalido"); 
                 System.exit(0);
             }
     
@@ -64,7 +64,7 @@ public class mySharingClient {
 
                     //Fica a repetir o processo até introduzir a password correta ou um novo user e pass
 
-                    System.out.print("Resposta Invalida, tente novamente (eg: Alberto benfica): ");
+                    System.out.print("Resposta Invalida, tente novamente (eg: Beto seguranca2025): ");
                     String[] credentials = getValidCredentials(scanner);
                     userInputUser = credentials[0];
                     userInputPassword = credentials[1];
@@ -160,7 +160,7 @@ public class mySharingClient {
                             String respostaDoServer = (String) inputStream.readObject();
                             //Se nao foi validada a operacao, acabar
                             if(!respostaDoServer.equals("OK")){
-                                System.out.println("Resposta :" + respostaDoServer);
+                                System.out.println("Resposta :" + respostaDoServer + System.lineSeparator());
                                 doneOperation = true;
                                 break;
                             } 
@@ -214,7 +214,7 @@ public class mySharingClient {
         //Percorre todos os ficheiros
 
         for (int i = 2; i < arrayDeArgumentos.length; i++) {
-            System.out.println(arrayDeArgumentos[i]);
+            //System.out.println(arrayDeArgumentos[i]);
 
             //mete no strbuilder o path atual
             sBuilder.append(arrayDeArgumentos[i]).append(": ");

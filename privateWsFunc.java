@@ -22,7 +22,7 @@ public class privateWsFunc {
         Scanner scanner = new Scanner(file);
         String linha;
 
-        System.out.println("User is " + user + "|");
+        //System.out.println("User is " + user + "|");
         while (scanner.hasNextLine()) {
             linha = scanner.nextLine();
             if(linha.contains(":" + user) || linha.contains(", " + user)){
@@ -127,7 +127,7 @@ public class privateWsFunc {
 
         public static void create_new_ws(String username){
 			StringBuilder sb = new StringBuilder();
-			System.out.println("Estou aqui a criar uma nova workspace para o: " + username);
+			//System.out.println("Estou aqui a criar uma nova workspace para o: " + username);
 			try{
 				File workspaceFile = new File("workspaces.txt");
 				if (!workspaceFile.exists()) {
@@ -147,7 +147,7 @@ public class privateWsFunc {
             StringBuilder sb = new StringBuilder("workspacesFolder").append(File.separator)
                                         .append(ws).append(File.separator).append(fileName);
             String filepath = sb.toString();
-            System.out.println("o file a deletar tem filepath = " + filepath);
+            //System.out.println("o file a deletar tem filepath = " + filepath);
             File toRemove = new File(filepath);
             if(toRemove.exists()){
                 toRemove.delete();

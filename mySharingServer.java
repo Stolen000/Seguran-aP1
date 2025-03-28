@@ -120,7 +120,7 @@ public class mySharingServer{
 							//Checkar se <ws> já existe ou n
 							//ficheiro novo/vazio
 							if(workspaceFile.length() == 0){
-								System.out.println("ws file vazio, adicionando primeiro workspace...");
+								//System.out.println("ws file vazio, adicionando primeiro workspace...");
 								privateWsFunc.escreveLinhaNovaDoWsFile(arrayDeArgumentos[1],user);
 								outStream.writeObject("OK");
 								break;
@@ -130,7 +130,7 @@ public class mySharingServer{
 									outStream.writeObject("NOK");
 									break;
 								} else if(arrayDeArgumentos[1].startsWith("AutoWorkspace-")){
-									System.out.println("Nao podes criar workspaces com nome generico");
+									//System.out.println("Nao podes criar workspaces com nome generico");
 									outStream.writeObject("NOK");
 									break;
 								}
@@ -253,7 +253,7 @@ public class mySharingServer{
 							break;
 
 						default:
-							System.out.println("Comando invalido, tente novamente.");
+							//System.out.println("Comando invalido, tente novamente.");
 					}
 				}
 				outStream.close();
@@ -273,10 +273,14 @@ public class mySharingServer{
 					for(int i = 2; i < arrayDeArgumentos.length; i++){
 						boolean removed = privateWsFunc.removeFile(arrayDeArgumentos[1], arrayDeArgumentos[i]);
 						if(removed){
-							sb.append(arrayDeArgumentos[i] + ": APAGADO").append(System.lineSeparator());
+							sb.append(arrayDeArgumentos[i] + ": APAGADO");
 						}
 						else{
-							sb.append("O ficheiro " + arrayDeArgumentos[i] + " não existe no workspace indicado");
+							sb.append("O ficheiro " + arrayDeArgumentos[i] + " nao existe no workspace indicado");
+						}
+
+						if (i < arrayDeArgumentos.length - 1) {
+							sb.append(System.lineSeparator());
 						}
 					}
 				}
@@ -322,13 +326,13 @@ public class mySharingServer{
 						Scanner sc = new Scanner(db);
 						// Ficheiro user.txt vazio
 						if (!sc.hasNextLine()) {
-							System.out.println("Arquivo vazio, adicionando primeira entrada...");
+							//System.out.println("Arquivo vazio, adicionando primeira entrada...");
 							sb.append(user).append(":").append(passwd).append(System.lineSeparator());
 							try (FileWriter writer = new FileWriter(db)) {
 								writer.write(sb.toString());
 							}
 							outStream.writeObject("OK-NEW-USER");
-							System.out.println("NOVO USER!!! UPI");;
+							//System.out.println("NOVO USER!!!");;
 							privateWsFunc.create_new_ws(user);
 							autentificado = true;
 							
@@ -357,7 +361,7 @@ public class mySharingServer{
 
 										if (username.toUpperCase().equals(user.toUpperCase()) && !encontrouUser){
 											encontrouUser = true;
-											System.out.println("User com caracteres iguais");
+											//System.out.println("User com caracteres iguais");
 											outStream.writeObject("WRONG-PWD");
 										}
 									}
@@ -377,7 +381,7 @@ public class mySharingServer{
 								writer.write(sb.toString());
 							}
 							outStream.writeObject("OK-NEW-USER"); // User novo
-							System.out.println("NOVO USER!!! UPI PORQUE NAO ENCONTROU NENHUM");;
+							//System.out.println("NOVO USER!!! PORQUE NAO ENCONTROU NENHUM");;
 							privateWsFunc.create_new_ws(user);
 							autentificado = true;
 						}

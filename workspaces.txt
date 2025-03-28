@@ -1,5 +1,3 @@
-
 AutoWorkspace-gui:gui>gui
+ws:gui>gui, carolina
 AutoWorkspace-carolina:carolina>carolina
-AutoWorkspace-andre:andre>andre
-guiws:gui>gui, carolina

@@ -239,7 +239,7 @@ public class mySharingServer{
 					for(int i = 2; i < arrayDeArgumentos.length; i++){
 						boolean removed = privateWsFunc.removeFile(arrayDeArgumentos[1], arrayDeArgumentos[i]);
 						if(removed){
-							sb.append(arrayDeArgumentos[i] + ": APAGADO");
+							sb.append(arrayDeArgumentos[i] + ": APAGADO").append(System.lineSeparator());
 						}
 						else{
 							sb.append("O ficheiro " + arrayDeArgumentos[i] + " não existe no workspace indicado");

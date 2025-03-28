@@ -1,3 +1,2 @@
-gui:dias
+gui:diuas
 carolina:dias
-andre:dias

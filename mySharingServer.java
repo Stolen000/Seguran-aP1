@@ -212,12 +212,38 @@ public class mySharingServer{
 							break;
 
 						case "LS":
-							String filepath = "workspacesFolder" + File.separator + arrayDeArgumentos[1];
-							File wsFolder = new File(filepath);
-							String [] files = wsFolder.list();
-							outStream.writeObject(privateFunctions.formatMsg(files));
 
+							File wsFile = new File("workspaces.txt");
+							Scanner scanner = new Scanner(wsFile);
+							String linha;
+							boolean hasPerm = false;
+							while (scanner.hasNextLine()) {
+								linha = scanner.nextLine();
+								//Encontrou um workspace com esse nome
+								if (linha.startsWith(arrayDeArgumentos[1] + ":")) {		
+									//formato wsName:owner>user/owner, user1, user2
+									//separar linha em: wsName:owner>owner || user1 || user2
+									String[] usersInWs = linha.split(", ");
+			
+									//verificar users
+									for(String userInWs : usersInWs){
+										if(userInWs.equals(user)){
+											hasPerm = true;
+										}
+									}
+								}
+							}
+							if(hasPerm){
+								String filepath = "workspacesFolder" + File.separator + arrayDeArgumentos[1];
+								File wsFolder = new File(filepath);
+								String [] files = wsFolder.list();
+								outStream.writeObject(privateFunctions.formatMsg(files));
+							}
+							else{
+								outStream.writeObject("NOPERM");
+							}
 							break;
+
 						default:
 							System.out.println("Comando invalido, tente novamente.");
 					}
@@ -331,7 +357,6 @@ public class mySharingServer{
 
 
 							}
-
 
 
 						}

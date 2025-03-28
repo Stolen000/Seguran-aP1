@@ -145,6 +145,7 @@ public class mySharingClient {
                             //Se nao foi validada a operacao, acabar
                             if(!respostaDoServer.equals("OK")){
                                 doneOperation = true;
+                                System.out.println("Resposta: " + respostaDoServer + System.lineSeparator());
                                 break;
                             } 
                             System.out.println(uploadFicheiros(inputStream, outputStream, arrayDeArgumentos));

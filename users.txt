@@ -1,2 +1,0 @@
-gui:diuas
-carolina:dias

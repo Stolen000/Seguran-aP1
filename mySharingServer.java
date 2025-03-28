@@ -216,14 +216,19 @@ public class mySharingServer{
 							File wsFile = new File("workspaces.txt");
 							Scanner scanner = new Scanner(wsFile);
 							String linha;
+							boolean wsExists = false;
 							boolean hasPerm = false;
 							while (scanner.hasNextLine()) {
 								linha = scanner.nextLine();
 								//Encontrou um workspace com esse nome
-								if (linha.startsWith(arrayDeArgumentos[1] + ":")) {		
+								if (linha.startsWith(arrayDeArgumentos[1] + ":")) {	
+									wsExists = true;
 									//formato wsName:owner>user/owner, user1, user2
 									//separar linha em: wsName:owner>owner || user1 || user2
 									String[] usersInWs = linha.split(", ");
+									String[] owner = usersInWs[0].split(">");
+                                    //wsName:owner>owner dividido em wsName:owner> || owner
+                                    usersInWs[0] = owner[1];
 			
 									//verificar users
 									for(String userInWs : usersInWs){
@@ -233,7 +238,9 @@ public class mySharingServer{
 									}
 								}
 							}
-							if(hasPerm){
+							if(!wsExists){
+                                outStream.writeObject("NOWS");
+                            }else if(hasPerm){
 								String filepath = "workspacesFolder" + File.separator + arrayDeArgumentos[1];
 								File wsFolder = new File(filepath);
 								String [] files = wsFolder.list();
@@ -242,6 +249,7 @@ public class mySharingServer{
 							else{
 								outStream.writeObject("NOPERM");
 							}
+
 							break;
 
 						default:

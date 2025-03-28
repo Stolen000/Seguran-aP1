@@ -101,10 +101,10 @@ public class privateWsFunc {
 				}
 				writer.close();
                 linha = "";
-				if(!ownerValid || !userToAddValid){
+				if(!foundWs){
+                    linha = "NOWS";
+				} else if(!ownerValid || !userToAddValid){
                     linha = "NOPERM";
-				} else if(!foundWs){
-					linha = "NOWS";
 				}
                 else{
                     linha = "OK";

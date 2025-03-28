@@ -422,8 +422,9 @@ public class mySharingServer{
 			String pathFicheiroAtual;
 			File ficheiroAtual;
 			boolean readBool;
-			StringBuilder pathFicheiroAtualSb = new StringBuilder();
+			StringBuilder pathFicheiroAtualSb;
 			for (int i = 2; i < arrayDeArgumentos.length; i++) {
+				pathFicheiroAtualSb = new StringBuilder();
 				pathFicheiroAtualSb.append("workspacesFolder")
 								.append(File.separator)
 								.append(arrayDeArgumentos[1])
@@ -431,6 +432,8 @@ public class mySharingServer{
 								.append(arrayDeArgumentos[i]);
 				pathFicheiroAtual = pathFicheiroAtualSb.toString();
 				ficheiroAtual = new File(pathFicheiroAtual);
+
+				//System.out.println(pathFicheiroAtual);
 
 				if(ficheiroAtual.exists()){
 					//Enviamos o pathname

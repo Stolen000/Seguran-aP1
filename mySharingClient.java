@@ -16,7 +16,6 @@ import java.util.Scanner;
 
 
 public class mySharingClient {
-    private static boolean isUserCorrect;
     
         public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException{
             System.out.println("cliente : main");
@@ -36,13 +35,14 @@ public class mySharingClient {
             ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
     
             ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-    
-            isUserCorrect = mySharingClient.startAuthentication(inputStream, outputStream, inputs[2], inputs[3], sc);
+            createHookShutdown(inputStream, outputStream, clientSocket);
 
-        mySharingClient.runClient(inputStream, outputStream, clientSocket, sc);
+            if(mySharingClient.startAuthentication(inputStream, outputStream, inputs[2], inputs[3], sc)){
 
-        sc.close();
+                mySharingClient.runClient(inputStream, outputStream, clientSocket, sc);
 
+            }
+            sc.close();
     }
 
     private static boolean startAuthentication(ObjectInputStream inputStream, ObjectOutputStream outputStream, String username, String password, Scanner scanner){
@@ -86,28 +86,6 @@ public class mySharingClient {
     }
 
     private static void runClient(ObjectInputStream inputStream, ObjectOutputStream outputStream, Socket clientSocket, Scanner sc){
-    
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            public void run() {
-                try {
-                    System.out.println("Shutting down ...");
-                    outputStream.writeObject("CLOSING");
-                    outputStream.flush();
-                    inputStream.close();
-                    outputStream.close();
-                    clientSocket.close();
-                    sc.close();
-                } catch (IOException e) {
-                    System.err.println("Error closing socket in shutdown hook: " + e.getMessage());
-                } catch (NoSuchElementException e) {
-                    System.err.println("Scanner closed");
-                }
-            }
-        });
-        
-        if(!isUserCorrect){
-            return;
-        }
 
         //Servidor cria novo workspace e entra no loop de operaçoes ? || encontrou user
         //Declaracao de variaveis
@@ -233,7 +211,10 @@ public class mySharingClient {
         StringBuilder sBuilder = new StringBuilder("Resposta: ");
         
         //Percorre todos os ficheiros
+
         for (int i = 2; i < arrayDeArgumentos.length; i++) {
+            System.out.println(arrayDeArgumentos[i]);
+
             //mete no strbuilder o path atual
             sBuilder.append(arrayDeArgumentos[i]).append(": ");
             //fica á espera do path para saber se existe no ws
@@ -434,6 +415,44 @@ public class mySharingClient {
         }
     
         return new String[]{user_id, password};
+    }
+
+    private static void createHookShutdown(ObjectInputStream inputStream, ObjectOutputStream outputStream, Socket clientSocket){
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+
+            public void run() {
+
+                try {
+
+                    System.out.println("Shutting down ...");
+
+                    outputStream.writeObject("CLOSING");
+
+                    outputStream.flush();
+
+                    inputStream.close();
+
+                    outputStream.close();
+
+                    clientSocket.close();
+
+                    //sc.close();
+
+                } catch (IOException e) {
+
+                    System.err.println("Error closing socket in shutdown hook: " + e.getMessage());
+
+                } catch (NoSuchElementException e) {
+
+                    System.err.println("Scanner closed");
+
+                }
+
+            }
+
+        });
+
     }
     
     

@@ -1,22 +1,12 @@
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
-import java.io.Writer;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
@@ -65,31 +55,24 @@ public class mySharingServer{
 		//sSoc.close();
 	}
 
-
 	//Threads utilizadas para comunicacao com os clientes
 	class ServerThread extends Thread {
-
-
 
 		private Socket socket = null;
 		private String user;
 		private String passwd;
-		private String megaFolderStr = "workspacesFolder";
 
 		ServerThread(Socket inSoc) {
 			socket = inSoc;
 			//System.out.println("thread do server para cada cliente");
 		}
- 
-		public void run(){
 
+		public void run(){
 
 			try {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
-
-				
 				//file dos users com passwords
 				File db = new File("users.txt");
 				if (!db.exists()) {
@@ -102,12 +85,11 @@ public class mySharingServer{
 				}
 
 				//file dos users com passwords
-				File megaFold = new File(megaFolderStr);
+				File megaFold = new File("workspacesFolder");
 				if (!megaFold.exists()) {
 					megaFold.mkdir();
 				}
 				String isUserAuth = authentification(outStream, inStream, false, db);
-
 				
 			//Servidor tem que manter estruturas de dados com os dados dos users??
 
@@ -139,11 +121,11 @@ public class mySharingServer{
 							//ficheiro novo/vazio
 							if(workspaceFile.length() == 0){
 								System.out.println("ws file vazio, adicionando primeiro workspace...");
-								escreveLinhaNovaDoWsFile(arrayDeArgumentos[1],user);
+								privateWsFunc.escreveLinhaNovaDoWsFile(arrayDeArgumentos[1],user);
 								outStream.writeObject("OK");
 								break;
 							} else {
-								if (!findWorkspace(arrayDeArgumentos[1]).equals("-1")){
+								if (!privateWsFunc.findWorkspace(arrayDeArgumentos[1]).equals("-1")){
 									//encontrou ws com o nome dado
 									outStream.writeObject("NOK");
 									break;
@@ -152,7 +134,7 @@ public class mySharingServer{
 									outStream.writeObject("NOK");
 									break;
 								}
-								escreveLinhaNovaDoWsFile(arrayDeArgumentos[1],user);
+								privateWsFunc.escreveLinhaNovaDoWsFile(arrayDeArgumentos[1],user);
 								outStream.writeObject("OK");
 								break;
 							}
@@ -172,7 +154,7 @@ public class mySharingServer{
 							
 							//procurar o ws e vê se o user é o owner
 							//----------------------Checkar se <ws> já existe ou n
-							outStream.writeObject(addUserToWS(arrayDeArgumentos[2], arrayDeArgumentos[1], user));
+							outStream.writeObject(privateWsFunc.addUserToWS(arrayDeArgumentos[2], arrayDeArgumentos[1], user));
 							//-----------------------------
 							break;
 							
@@ -180,13 +162,13 @@ public class mySharingServer{
 						//Funciona tudo bem mas n funciona caso ja exista ficheiro
 						case "UP":
 							String workspaceUPPath = arrayDeArgumentos[1];
-							String wsUP = findWorkspace(workspaceUPPath);
+							String wsUP = privateWsFunc.findWorkspace(workspaceUPPath);
 							//verificar Se ws existe, cliente n pertence ao ws NOWS | NOPERM
 							if(wsUP.equals("-1")){
 								outStream.writeObject("NOWS");
 								break;
 							}
-							if(!doesUserHavePermsForWS(outStream, wsUP, user)){
+							if(!privateWsFunc.doesUserHavePermsForWS(outStream, wsUP, user)){
 								outStream.writeObject("NOPERM");
 								break;
 							}
@@ -198,13 +180,13 @@ public class mySharingServer{
 						//RM <ws> <file1> ... <filen>
 						case "DW":
 							String workspaceDWPath = arrayDeArgumentos[1];
-							String wsDW = findWorkspace(workspaceDWPath);
+							String wsDW = privateWsFunc.findWorkspace(workspaceDWPath);
 							//verificar Se ws existe, cliente n pertence ao ws NOWS | NOPERM
 							if(wsDW.equals("-1")){
 								outStream.writeObject("NOWS");
 								break;
 							}
-							if(!doesUserHavePermsForWS(outStream, wsDW, user)){
+							if(!privateWsFunc.doesUserHavePermsForWS(outStream, wsDW, user)){
 								outStream.writeObject("NOPERM");
 								break;
 							}
@@ -224,73 +206,38 @@ public class mySharingServer{
 						//LW
 						case "LW":
 							//Lista as WS associadas com um user no formato {<ws1>, <ws2>}
-							List<String> userWs = ListOfAssociatedWS(user);
+							List<String> userWs = privateWsFunc.ListOfAssociatedWS(user);
 							String[] lista = userWs.toArray(new String[0]);
-							outStream.writeObject(formatMsg(lista));
+							outStream.writeObject(privateFunctions.formatMsg(lista));
 							break;
 
 						case "LS":
-							String filepath = megaFolderStr + File.separator + arrayDeArgumentos[1];
+							String filepath = "workspacesFolder" + File.separator + arrayDeArgumentos[1];
 							File wsFolder = new File(filepath);
 							String [] files = wsFolder.list();
-							outStream.writeObject(formatMsg(files));
+							outStream.writeObject(privateFunctions.formatMsg(files));
 
 							break;
 						default:
 							System.out.println("Comando invalido, tente novamente.");
 					}
 				}
-
 				outStream.close();
 				inStream.close();
 				socket.close();
                 
             } catch (IOException | ClassNotFoundException e) {
-
 				e.printStackTrace();
-
-
 			}
         }
 
-		private boolean doesUserHavePermsForWS(ObjectOutputStream outStream, String ws, String user) throws IOException {
-			return ws.contains(":" + user) || ws.contains(", " + user);
-		}
-		
-		private String formatMsg(String[] lista){
-			StringBuilder sb = new StringBuilder();
-			sb.append("{");
-			if(lista != null){
-				for(int i = 0; i < lista.length; i++){
-					if(i == lista.length - 1){
-						sb.append(lista[i]);
-					}
-					else{
-						sb.append(lista[i] + ", ");
-					}
-				}
-			}
-			sb.append("}");
-			return sb.toString();
-		}
-
 		private String remove(String[] arrayDeArgumentos) throws FileNotFoundException {
-			//argumentos
-			//workspace
-				//workspace existente
-				//user com autorizacao no workspace
-			
-			//files
-				//file existe
-			//apagar file																								funciona este print apenas para 1 file a rm
-			//System.out.println("entrei no remove function com os argumentos ws e file = " + arrayDeArgumentos[1] + " e " + arrayDeArgumentos[2]);
-
-			List <String> userWs = ListOfAssociatedWS(user);
+			List <String> userWs = privateWsFunc.ListOfAssociatedWS(user);
 			StringBuilder sb = new StringBuilder();
-			if(findWorkspace(arrayDeArgumentos[1]) != "-1"){
+			if(privateWsFunc.findWorkspace(arrayDeArgumentos[1]) != "-1"){
 				if(userWs.contains(arrayDeArgumentos[1])){
 					for(int i = 2; i < arrayDeArgumentos.length; i++){
-						boolean removed = removeFile(arrayDeArgumentos[1], arrayDeArgumentos[i]);
+						boolean removed = privateWsFunc.removeFile(arrayDeArgumentos[1], arrayDeArgumentos[i]);
 						if(removed){
 							sb.append(arrayDeArgumentos[i] + ": APAGADO");
 						}
@@ -300,53 +247,15 @@ public class mySharingServer{
 					}
 				}
 				else{
-					// mandar msg NOPERM
 					sb.append(("NOPERM"));
 				}
 			}
 			else{
-				//mandar msg NOWS
 				sb.append(("NOWS"));
 			}
 			return sb.toString();
 		}
 
-		//formatar resultado depois para a LW
-		private List<String> ListOfAssociatedWS(String user) throws FileNotFoundException {
-			//Pesquisar ws e ficar com os que tem o user la associado, meter no sb no formato {<ws1>, <ws2>}
-			List <String> userWs = new ArrayList<>();
-			File file = new File("workspaces.txt");
-			Scanner scanner = new Scanner(file);
-			String linha;
-
-			System.out.println("User is " + user + "|");
-			while (scanner.hasNextLine()) {
-				linha = scanner.nextLine();
-				if(linha.contains(":" + user) || linha.contains(", " + user)){
-					//eh o owner ou faz parte
-					//da append do nome do workspace
-					userWs.add(linha.substring(0, linha.indexOf(":")));
-				}
-				
-			}
-			scanner.close();
-			return userWs;
-		}
-
-		private boolean removeFile(String ws, String fileName){
-			boolean suces = false;
-			StringBuilder sb = new StringBuilder(megaFolderStr).append(File.separator)
-										.append(ws).append(File.separator).append(fileName);
-			String filepath = sb.toString();
-			System.out.println("o file a deletar tem filepath = " + filepath);
-			File toRemove = new File(filepath);
-			if(toRemove.exists()){
-				toRemove.delete();
-				suces = true;
-			}
-
-			return suces;
-		}
 
 		private String authentification(ObjectOutputStream outStream, ObjectInputStream inStream, boolean findUser, File db) throws ClassNotFoundException{
 			boolean encontrouUser = findUser;
@@ -386,7 +295,7 @@ public class mySharingServer{
 							}
 							outStream.writeObject("OK-NEW-USER");
 							System.out.println("NOVO USER!!! UPI");;
-							create_new_ws(user);
+							privateWsFunc.create_new_ws(user);
 							autentificado = true;
 							
 
@@ -436,7 +345,7 @@ public class mySharingServer{
 							}
 							outStream.writeObject("OK-NEW-USER"); // User novo
 							System.out.println("NOVO USER!!! UPI PORQUE NAO ENCONTROU NENHUM");;
-							create_new_ws(user);
+							privateWsFunc.create_new_ws(user);
 							autentificado = true;
 						}
 			
@@ -450,23 +359,6 @@ public class mySharingServer{
 				}
 			}
 			return autentificado ? "true" : "false";
-		}
-
-		private void create_new_ws(String username){
-			StringBuilder sb = new StringBuilder();
-			System.out.println("Estou aqui a criar uma nova workspace para o: " + username);
-			try{
-				File workspaceFile = new File("workspaces.txt");
-				if (!workspaceFile.exists()) {
-					workspaceFile.createNewFile();
-				}
-
-				sb.append("AutoWorkspace-").append(username);
-				escreveLinhaNovaDoWsFile(sb.toString(),username);
-				
-			}catch(IOException e){
-				e.printStackTrace();
-			}
 		}
 
 
@@ -492,112 +384,6 @@ public class mySharingServer{
 			}
 			scanner.close();
 			return false; 
-		}
-		
-		private String findWorkspace(String workspaceToFind) throws FileNotFoundException{
-			File file = new File("workspaces.txt");
-			Scanner scanner = new Scanner(file);
-			String linha;
-			while (scanner.hasNextLine()) {
-				linha = scanner.nextLine();
-				//Encontrou um workspace com esse nome
-				if ((linha.toUpperCase()).startsWith((workspaceToFind.toUpperCase()) + ":")) {
-					//Encontrou ja o ws
-					scanner.close();
-					return linha;
-				}
-			}
-			scanner.close();
-			return "-1";
-		}
-    
-
-		//Metodo do ADD, retorna o output para mandar ao servidor
-		//NOPERM se user nao for owner do ws ou se userToAdd ja estah no ws
-		//NOWS se nao existir o ws 
-		//Retorna OK se sucesso
-		private String addUserToWS(String workspace, String userToAdd, String user) throws IOException{
-			File wsFile = new File("workspaces.txt");
-			Scanner scanner = new Scanner(wsFile);
-			File tempFile = new File("temp.txt");
-			try (PrintWriter writer = new PrintWriter(new FileWriter(tempFile))) {
-				String linha;
-                //se user a dar Add eh owner do ws
-                boolean ownerValid = false;
-                //se user a adicionar nao pertence ja ao ws
-                boolean userToAddValid = true;
-
-                //se encontra @param workspace em workspaces.txt
-                boolean foundWs = false;
-
-				while (scanner.hasNextLine()) {
-					linha = scanner.nextLine();
-					//Encontrou um workspace com esse nome
-					if (linha.startsWith(workspace + ":")) {
-                        foundWs = true;
-
-						//formato wsName:owner>user/owner, user1, user2
-                        //separar linha em: wsName:owner>owner || user1 || user2
-                        String[] usersInWs = linha.split(", ");
-
-                        //verificar o owner
-                        String[] isOwner = usersInWs[0].split(">");
-                        //wsName:owner>owner dividido em wsName:owner> || owner
-                        ownerValid = isOwner[1].equals(user);
-
-                        //verificar users
-                        for(String userInWs : usersInWs){
-                            if(userInWs.equals(userToAdd)){
-                                userToAddValid = false;
-                            }
-                        }
-                        if(userToAddValid){
-                            linha += ", " + userToAdd;
-                        }
-
-					}
-					writer.println(linha);
-				}
-				writer.close();
-                linha = "";
-				if(!ownerValid || !userToAddValid){
-                    linha = "NOPERM";
-				} else if(!foundWs){
-					linha = "NOWS";
-				}
-                else{
-                    linha = "OK";
-                }
-
-				scanner.close();
-				if (linha.equals("OK")) {
-					if(wsFile.delete()){
-						tempFile.renameTo(wsFile);
-					} else {
-						System.out.println("Something went wrong! 311");
-					}
-					
-				} else {
-					tempFile.delete();
-				}
-				return linha;
-			}
-		}
-
-		private void escreveLinhaNovaDoWsFile(String workspaceName, String user) throws IOException{
-			File wsfile = new File("workspaces.txt");
-			//nao devia ser criada aqui, mas so para assegurar
-			File wsPath = new File(megaFolderStr + File.separator + workspaceName);
-			if(!wsPath.exists()){
-				wsPath.mkdir();
-			}
-			StringBuilder strBldr = new StringBuilder();
-			strBldr.append(workspaceName).append(":").append(user)
-											.append(">").append(user)
-											.append(System.lineSeparator());
-			try (FileWriter writer = new FileWriter(wsfile, true)) {
-				writer.write(strBldr.toString());
-			}
 		}
 
 		private void receiveFilesAndRespond(ObjectOutputStream outStream, ObjectInputStream inStream,
@@ -631,14 +417,14 @@ public class mySharingServer{
 		}
 
 		private void dwSendFiles(ObjectInputStream inputStream, ObjectOutputStream outputStream,
-				String[] arrayDeArgumentos) throws IOException, ClassNotFoundException{
+			String[] arrayDeArgumentos) throws IOException, ClassNotFoundException{
 					
 			String pathFicheiroAtual;
 			File ficheiroAtual;
 			boolean readBool;
 			StringBuilder pathFicheiroAtualSb = new StringBuilder();
 			for (int i = 2; i < arrayDeArgumentos.length; i++) {
-				pathFicheiroAtualSb.append(megaFolderStr)
+				pathFicheiroAtualSb.append("workspacesFolder")
 								.append(File.separator)
 								.append(arrayDeArgumentos[1])
 								.append(File.separator)
@@ -649,7 +435,7 @@ public class mySharingServer{
 				if(ficheiroAtual.exists()){
 					//Enviamos o pathname
 					outputStream.writeObject(arrayDeArgumentos[i]);
-					//Recebe validaºão do client
+					//Recebe validacao do client
 					readBool = (boolean) inputStream.readObject();
 					if(readBool){
 						//Validou entao envia ficheiro

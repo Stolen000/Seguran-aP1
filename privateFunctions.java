@@ -3,6 +3,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -95,5 +96,22 @@ public class privateFunctions {
 				return true;
 			}
 			return false;
+		}
+
+		public static String formatMsg(String[] lista){
+			StringBuilder sb = new StringBuilder();
+			sb.append("{");
+			if(lista != null){
+				for(int i = 0; i < lista.length; i++){
+					if(i == lista.length - 1){
+						sb.append(lista[i]);
+					}
+					else{
+						sb.append(lista[i] + ", ");
+					}
+				}
+			}
+			sb.append("}");
+			return sb.toString();
 		}
 }

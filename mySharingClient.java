@@ -44,7 +44,7 @@ public class mySharingClient {
             }
             sc.close();
     }
-
+    //
     private static boolean startAuthentication(ObjectInputStream inputStream, ObjectOutputStream outputStream, String username, String password, Scanner scanner){
        
         boolean respostaInvalida = true;

@@ -1,3 +1,0 @@
-AutoWorkspace-gui:gui>gui
-ws:gui>gui, carolina
-AutoWorkspace-carolina:carolina>carolina

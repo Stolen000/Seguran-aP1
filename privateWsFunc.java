@@ -133,10 +133,13 @@ public class privateWsFunc {
 				if (!workspaceFile.exists()) {
 					workspaceFile.createNewFile();
 				}
-
+				if(!mySharingServer.verifyFileMac("workspaces")){
+					System.out.println("No autentication ficheiro MAC user estava corrompido");
+					System.out.println("Tenho pena mas vou fechar");
+					System.exit(1); 
+				}
 				sb.append("AutoWorkspace-").append(username);
 				escreveLinhaNovaDoWsFile(sb.toString(),username);
-				
 			}catch(IOException e){
 				e.printStackTrace();
 			}
@@ -159,6 +162,7 @@ public class privateWsFunc {
     
     
         public static void escreveLinhaNovaDoWsFile(String workspaceName, String user) throws IOException{
+            
             File wsfile = new File("workspaces.txt");
             //nao devia ser criada aqui, mas so para assegurar
             File wsPath = new File("workspacesFolder" + File.separator + workspaceName);

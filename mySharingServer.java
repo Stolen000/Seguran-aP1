@@ -315,7 +315,7 @@ public class mySharingServer{
 
 				File db = new File("users.txt");
 				File workspaceFile = new File("workspaces.txt");
-				String isUserAuth = authentication(outStream, inStream, false, db);
+				String isUserAuth = authentication(outStream, inStream, db);
 
 				//atualizar aqui
 				//user e workspace
@@ -575,8 +575,8 @@ public class mySharingServer{
 		}
 
 
-		private String authentication (ObjectOutputStream outStream, ObjectInputStream inStream, boolean findUser, File db) throws ClassNotFoundException{
-			boolean encontrouUser = findUser;
+		private String authentication (ObjectOutputStream outStream, ObjectInputStream inStream, File db) throws ClassNotFoundException{
+			boolean encontrouUser = false;
 			boolean autentificado = false;
 			while(!autentificado){
 
@@ -627,13 +627,15 @@ public class mySharingServer{
 							while (sc.hasNextLine() && !encontrouUser) {
 								String linha = sc.nextLine();
 								if (linha.contains(":")) {
-									String[] parts = linha.split(":", 2);
-									if (parts.length == 2) {
+									String[] parts = linha.split(":", 3);
+									if (parts.length == 3) {
 										String username = parts[0].trim();
-										String password = parts[1].trim();
+										String storedHash = parts[1].trim();
+										String storedSalt = parts[2].trim();
 										
 										if (username.equals(user)) {
-											if(password.equals(passwd)){
+											
+											if(verifyPassword(passwd,storedHash,storedSalt)){
 												outStream.writeObject("OK-USER"); //User encontrado
 												autentificado = true;
 											} else {
@@ -679,6 +681,32 @@ public class mySharingServer{
 		}
 
 
+		private boolean verifyPassword(String inputPassword, String storedHash, String storedSalt) {
+			// Decodificar o salt de Base64 para bytes
+			byte[] salt = Base64.getDecoder().decode(storedSalt);
+			String inputHash = "";
+			try {
+				// Combinar inputPassword com o salt
+				byte[] passwordBytes = inputPassword.getBytes("UTF-8");
+				byte[] combined = new byte[passwordBytes.length + salt.length];
+				System.arraycopy(passwordBytes, 0, combined, 0, passwordBytes.length);
+				System.arraycopy(salt, 0, combined, passwordBytes.length, salt.length);
+
+				// Calcular o hash com SHA-256
+				MessageDigest md = MessageDigest.getInstance("SHA-256");
+				byte[] hash = md.digest(combined);
+
+				// Codificar o hash calculado para Base64
+				inputHash = Base64.getEncoder().encodeToString(hash);
+
+			} catch (Exception e) {
+				System.out.println("Internal error during comparing hashes in User.txt");
+			}
+
+			// Comparar com o hash armazenado
+			return inputHash.equals(storedHash);
+		}
+
 		private void addNewUser(String username, String password, FileWriter fw) {
 			// Gerar salt aleatório de 16 bytes
 			byte[] salt = new byte[16];
@@ -705,7 +733,7 @@ public class mySharingServer{
 				fw.write(username + ":" + hashB64 + ":" + saltB64 + "\n");
 				fw.close();
 			} catch (Exception e) {
-				// TODO: handle exception
+				System.out.println("Internal error during writing in User.txt");
 			}
 
 

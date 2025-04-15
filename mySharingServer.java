@@ -9,9 +9,12 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.security.Key;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+
+import java.util.Base64;
 import java.util.List;
 import java.util.Scanner;
 
@@ -312,7 +315,7 @@ public class mySharingServer{
 
 				File db = new File("users.txt");
 				File workspaceFile = new File("workspaces.txt");
-				String isUserAuth = authentification(outStream, inStream, false, db);
+				String isUserAuth = authentication(outStream, inStream, false, db);
 
 				//atualizar aqui
 				//user e workspace
@@ -572,7 +575,7 @@ public class mySharingServer{
 		}
 
 
-		private String authentification(ObjectOutputStream outStream, ObjectInputStream inStream, boolean findUser, File db) throws ClassNotFoundException{
+		private String authentication (ObjectOutputStream outStream, ObjectInputStream inStream, boolean findUser, File db) throws ClassNotFoundException{
 			boolean encontrouUser = findUser;
 			boolean autentificado = false;
 			while(!autentificado){
@@ -610,7 +613,8 @@ public class mySharingServer{
 							//System.out.println("Arquivo vazio, adicionando primeira entrada...");
 							sb.append(user).append(":").append(passwd).append(System.lineSeparator());
 							try (FileWriter writer = new FileWriter(db)) {
-								writer.write(sb.toString());
+								addNewUser(user,passwd,writer); //Usar a funcao para adicionar o user corretamente
+								//writer.write(sb.toString());
 								macLogic.atualizarMAC("users", serverSecretKey);
 							}
 							outStream.writeObject("OK-NEW-USER");
@@ -649,9 +653,10 @@ public class mySharingServer{
 						}
 
 						if (!encontrouUser && !autentificado) {
-							sb.append(user).append(":").append(passwd).append(System.lineSeparator());
+							//sb.append(user).append(":").append(passwd).append(System.lineSeparator());
 							try (FileWriter writer = new FileWriter(db, true)) {
-								writer.write(sb.toString());
+								addNewUser(user, passwd, writer);
+								//writer.write(sb.toString());
 							}
 							outStream.writeObject("OK-NEW-USER"); // User novo
 							//System.out.println("NOVO USER!!! PORQUE NAO ENCONTROU NENHUM");;
@@ -673,6 +678,38 @@ public class mySharingServer{
 			return autentificado ? "true" : "false";
 		}
 
+
+		private void addNewUser(String username, String password, FileWriter fw) {
+			// Gerar salt aleatório de 16 bytes
+			byte[] salt = new byte[16];
+			SecureRandom sr = new SecureRandom();
+			sr.nextBytes(salt);
+
+			try {
+				// Combinar password + salt
+				byte[] passwordBytes = password.getBytes("UTF-8");
+				byte[] combined = new byte[passwordBytes.length + salt.length];
+				System.arraycopy(passwordBytes, 0, combined, 0, passwordBytes.length);
+				System.arraycopy(salt, 0, combined, passwordBytes.length, salt.length);
+
+				// Calcular o hash com SHA-256
+				MessageDigest md = MessageDigest.getInstance("SHA-256");
+				byte[] hash = md.digest(combined);
+
+				// Codificar hash e salt em Base64 para texto legível
+				String hashB64 = Base64.getEncoder().encodeToString(hash);
+				String saltB64 = Base64.getEncoder().encodeToString(salt);
+
+				// Escrever para o ficheiro no formato desejado
+				//FileWriter fw = new FileWriter("users.txt", true); // append
+				fw.write(username + ":" + hashB64 + ":" + saltB64 + "\n");
+				fw.close();
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
+
+
+		}
 
 		//Encontra user no ficheiro user.txt
 		//Returns true se encontrou, falso caso contrario

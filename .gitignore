@@ -14,3 +14,7 @@
 *.cer
 *.server
 *.client
+
+
+*.mac
+*.bin

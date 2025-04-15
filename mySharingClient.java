@@ -11,6 +11,12 @@ import java.net.UnknownHostException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
+
+
 
 
 
@@ -23,14 +29,18 @@ public class mySharingClient {
                 System.out.println("Input invalido"); 
                 System.exit(0);
             }
-    
+            System.setProperty("javax.net.ssl.trustStore", "truststore.client");
+            System.setProperty("javax.net.ssl.trustStorePassword", "keypass"); 
             Scanner sc = new Scanner(System.in);
     
             //Recebe os argumentos e guarda o ServerAdress para dar connect, o Porto, o User e a Pass
             String inputs[] = mySharingClient.verifyInput(args, sc);
+            
+
+            SocketFactory sf = SSLSocketFactory.getDefault();
+            SSLSocket clientSocket = (SSLSocket) sf.createSocket(inputs[0], Integer.parseInt(inputs[1]));
     
-    
-            Socket clientSocket = new Socket(inputs[0], Integer.parseInt(inputs[1]));
+            //Socket clientSocket = new Socket(inputs[0], Integer.parseInt(inputs[1]));
     
             ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
     

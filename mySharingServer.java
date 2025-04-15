@@ -15,6 +15,11 @@ import javax.crypto.spec.SecretKeySpec;
 import java.util.List;
 import java.util.Scanner;
 
+import javax.net.ServerSocketFactory;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+
+
 import javax.crypto.SecretKeyFactory;
 
 
@@ -248,12 +253,26 @@ public class mySharingServer{
     }
 
 	public void startServer (int port){
+
+		//========================================V
+		System.setProperty("javax.net.ssl.keyStore", "keystore.server");
+		System.setProperty("javax.net.ssl.keyStorePassword", "keypass");
+		//System.setProperty("javax.net.ssl.keyStoreType", "PKCS12");
+		
+		ServerSocketFactory ssf = SSLServerSocketFactory.getDefault( );
+		//SSLServerSocket ss = (SSLServerSocket) ssf.createServerSocket(9096);
+		//ss.setNeedClientAuth(true);
+
+		//========================================^
 		
 		int finalPort = (port != -1) ? port : 12345;
-		ServerSocket sSoc = null;
+		//ServerSocket sSoc = null; Alterar por socket ssl
+		SSLServerSocket sSoc = null;
 		try{
 			//System.err.println(finalPort);
-			sSoc = new ServerSocket(finalPort);			
+			//sSoc = new ServerSocket(finalPort);		
+			sSoc = (SSLServerSocket) ssf.createServerSocket(finalPort);	
+			//sSoc.setNeedClientAuth(true);
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 			System.exit(-1);

@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Key;
+import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Scanner;
@@ -274,33 +275,17 @@ public class macLogic {
             return mac;
         }
 
+    public static boolean compareMacs(String mac1, String mac2) {
+        try {
+            byte[] mac1Bytes = Base64.getDecoder().decode(mac1);
+            byte[] mac2Bytes = Base64.getDecoder().decode(mac2);
 
-        public static boolean compareMacs(String mac1, String mac2){
-            //tranforma em bytes
-            //chat gpt diz que comparar strings base64 eh bom mas pode ser mais seguro
-            //daí isto...
-            try{
-                //se ocorrer a exceçao ent ficheiro .mac possui uma string que nao estah no formato base64, ou seja assumir corrompido
-                byte[] mac1Bytes = Base64.getDecoder().decode(mac1);
-                byte[] mac2Bytes = Base64.getDecoder().decode(mac2);
-
-                return secureEquals(mac1Bytes, mac2Bytes);
-            }catch(IllegalArgumentException e){
-                System.err.println("Ficheiro .mac corrompido.");
-                return false;
-            }
-
-
+            return MessageDigest.isEqual(mac1Bytes, mac2Bytes);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Ficheiro .mac corrompido.");
+            return false;
         }
-        private static boolean secureEquals(byte[] a, byte[] b) {
-            if (a.length != b.length) return false;
-        
-            int result = 0;
-            for (int i = 0; i < a.length; i++) {
-                result |= a[i] ^ b[i];
-            }
-            return result == 0;
-        }
+    }
 
 
     public static void autodestruir(){

@@ -299,8 +299,7 @@ public class mySharingServer{
 	class ServerThread extends Thread {
 
 		private Socket socket = null;
-		private String user;
-		private String passwd;
+		private String username;
 
 		ServerThread(Socket inSoc) {
 			socket = inSoc;
@@ -338,7 +337,7 @@ public class mySharingServer{
 
 					if(comando != null && "CLOSING".equals(comando)){
 						//Cntrl C do cliente
-						System.out.println("Cliente:" + user + " fechou ligacao.");
+						System.out.println("Cliente:" + username + " fechou ligacao.");
 						socket.close();
 						//System.out.println("Socket closed.");
 						//Sai do while e acaba
@@ -359,7 +358,7 @@ public class mySharingServer{
 
 							if(workspaceFile.length() == 0){
 								//System.out.println("ws file vazio, adicionando primeiro workspace...");
-								privateWsFunc.escreveLinhaNovaDoWsFile(arrayDeArgumentos[1],user);
+								privateWsFunc.escreveLinhaNovaDoWsFile(arrayDeArgumentos[1],username);
 
 								
 							} else {
@@ -372,7 +371,7 @@ public class mySharingServer{
 									outStream.writeObject("NOK");
 									break;
 								}
-								privateWsFunc.escreveLinhaNovaDoWsFile(arrayDeArgumentos[1],user);
+								privateWsFunc.escreveLinhaNovaDoWsFile(arrayDeArgumentos[1],username);
 
 							}
 							macLogic.atualizarMAC("workspaces", serverSecretKey);
@@ -395,14 +394,14 @@ public class mySharingServer{
 								System.exit(1); 
 							}
 
-							if(!findUser(user) || db.length() == 0){
+							if(!findUser(username) || db.length() == 0){
 								outStream.writeObject("NOUSER");
 								break;
 							}
 
 							//procurar o ws e vê se o user é o owner
 							//----------------------Checkar se <ws> já existe ou n
-							outStream.writeObject(privateWsFunc.addUserToWS(arrayDeArgumentos[2], arrayDeArgumentos[1], user));
+							outStream.writeObject(privateWsFunc.addUserToWS(arrayDeArgumentos[2], arrayDeArgumentos[1], username));
 							//-----------------------------
 
 							//atualizar ficheiro de ws com novo user no ws assigned
@@ -425,7 +424,7 @@ public class mySharingServer{
 								outStream.writeObject("NOWS");
 								break;
 							}
-							if(!privateWsFunc.doesUserHavePermsForWS(outStream, wsUP, user)){
+							if(!privateWsFunc.doesUserHavePermsForWS(outStream, wsUP, username)){
 								outStream.writeObject("NOPERM");
 								break;
 							}
@@ -449,7 +448,7 @@ public class mySharingServer{
 								outStream.writeObject("NOWS");
 								break;
 							}
-							if(!privateWsFunc.doesUserHavePermsForWS(outStream, wsDW, user)){
+							if(!privateWsFunc.doesUserHavePermsForWS(outStream, wsDW, username)){
 								outStream.writeObject("NOPERM");
 								break;
 							}
@@ -481,7 +480,7 @@ public class mySharingServer{
 							}
 							
 							//Lista as WS associadas com um user no formato {<ws1>, <ws2>}
-							List<String> userWs = privateWsFunc.ListOfAssociatedWS(user);
+							List<String> userWs = privateWsFunc.ListOfAssociatedWS(username);
 							String[] lista = userWs.toArray(new String[0]);
 							outStream.writeObject(privateFunctions.formatMsg(lista));
 							break;
@@ -512,7 +511,7 @@ public class mySharingServer{
 			
 									//verificar users
 									for(String userInWs : usersInWs){
-										if(userInWs.equals(user)){
+										if(userInWs.equals(username)){
 											hasPerm = true;
 										}
 									}
@@ -546,7 +545,7 @@ public class mySharingServer{
         }
 
 		private String remove(String[] arrayDeArgumentos) throws FileNotFoundException {
-			List <String> userWs = privateWsFunc.ListOfAssociatedWS(user);
+			List <String> userWs = privateWsFunc.ListOfAssociatedWS(username);
 			StringBuilder sb = new StringBuilder();
 			if(privateWsFunc.findWorkspace(arrayDeArgumentos[1]) != "-1"){
 				if(userWs.contains(arrayDeArgumentos[1])){
@@ -574,25 +573,21 @@ public class mySharingServer{
 			return sb.toString();
 		}
 
-
+		/**
+		 * Funcao que tenta autenticar um dado 'username' e 'password'.
+		 * Verifica se o conjunto 'username' e 'password' encontra-se no ficheiro 'users.txt'.
+		 * @param outStream canal de envio para o cliente
+		 * @param inStream canal de rececao para mensagens vindas do cliente
+		 * @param db ficheiro de texto onde guardamos o 'username' e 'password'
+		 * @return se o user foi autenticado
+		 * @throws ClassNotFoundException
+		 */
 		private String authentication (ObjectOutputStream outStream, ObjectInputStream inStream, File db) throws ClassNotFoundException{
 			boolean encontrouUser = false;
 			boolean autentificado = false;
+			String inputUsername = "";
+			String inputPassword = "";
 			while(!autentificado){
-
-				try {
-					user = (String)inStream.readObject();
-					//System.out.print("User:" + user);
-					if(user.equals("CLOSING")){
-						return user;
-					}
-					passwd = (String)inStream.readObject();
-					//System.out.print("Pass:" + passwd);
-
-					//System.out.println("thread: depois de receber a password e o user");
-				}catch (ClassNotFoundException | IOException e) {
-					e.printStackTrace();
-				}
 
 				//verificar coerencia dos files macs
 				if(!verifyFileMac("users")){
@@ -600,26 +595,33 @@ public class mySharingServer{
 					System.out.println("Tenho pena mas vou fechar");
 					System.exit(1); 
 				}
+				
 				//Verificar credencias
 				try{
-					if (user.length() != 0 && passwd.length() != 0){									
+
+					inputUsername = (String)inStream.readObject();
+					//System.out.print("User:" + user);
+					if(inputUsername.equals("CLOSING")){
+						return inputUsername;
+					}
+					inputPassword = (String)inStream.readObject();
+					//System.out.print("Pass:" + passwd);
+					//System.out.println("thread: depois de receber a password e o user");
+
+					if (inputUsername.length() != 0 && inputPassword.length() != 0){									
 						encontrouUser = false;
-						StringBuilder sb = new StringBuilder();
-						
-						//-------
 						Scanner sc = new Scanner(db);
+
 						// Ficheiro user.txt vazio
 						if (!sc.hasNextLine()) {
 							//System.out.println("Arquivo vazio, adicionando primeira entrada...");
-							sb.append(user).append(":").append(passwd).append(System.lineSeparator());
 							try (FileWriter writer = new FileWriter(db)) {
-								addNewUser(user,passwd,writer); //Usar a funcao para adicionar o user corretamente
-								//writer.write(sb.toString());
+								addNewUser(inputUsername,inputPassword,writer); //Usar a funcao para adicionar o user corretamente
 								macLogic.atualizarMAC("users", serverSecretKey);
 							}
 							outStream.writeObject("OK-NEW-USER");
 							//System.out.println("NOVO USER!!!");;
-							privateWsFunc.create_new_ws(user);
+							privateWsFunc.create_new_ws(inputUsername);
 							macLogic.atualizarMAC("workspaces", serverSecretKey);
 							autentificado = true;
 							
@@ -629,22 +631,22 @@ public class mySharingServer{
 								if (linha.contains(":")) {
 									String[] parts = linha.split(":", 3);
 									if (parts.length == 3) {
-										String username = parts[0].trim();
+										String storedUsername = parts[0].trim();
 										String storedHash = parts[1].trim();
 										String storedSalt = parts[2].trim();
 										
-										if (username.equals(user)) {
-											
-											if(verifyPassword(passwd,storedHash,storedSalt)){
+										if (storedUsername.equals(inputUsername)) {
+											encontrouUser = true;
+											if(verifyPassword(inputPassword,storedHash,storedSalt)){
 												outStream.writeObject("OK-USER"); //User encontrado
 												autentificado = true;
 											} else {
 												outStream.writeObject("WRONG-PWD"); //Invalido
 											}
-											encontrouUser = true;
+
 										}
 
-										if (username.toUpperCase().equals(user.toUpperCase()) && !encontrouUser){
+										if (storedUsername.toUpperCase().equals(inputUsername.toUpperCase()) && !encontrouUser){
 											encontrouUser = true;
 											//System.out.println("User com caracteres iguais");
 											outStream.writeObject("WRONG-PWD");
@@ -657,22 +659,22 @@ public class mySharingServer{
 						if (!encontrouUser && !autentificado) {
 							//sb.append(user).append(":").append(passwd).append(System.lineSeparator());
 							try (FileWriter writer = new FileWriter(db, true)) {
-								addNewUser(user, passwd, writer);
+								addNewUser(inputUsername, inputPassword, writer);
 								//writer.write(sb.toString());
 							}
 							outStream.writeObject("OK-NEW-USER"); // User novo
 							//System.out.println("NOVO USER!!! PORQUE NAO ENCONTROU NENHUM");;
-							privateWsFunc.create_new_ws(user);
+							privateWsFunc.create_new_ws(inputUsername);
 							macLogic.atualizarMAC("workspaces", serverSecretKey);
 							autentificado = true;
 						}
-			
+						username = inputUsername;
 						sc.close();
 
 					} else {
 						outStream.writeObject(new String("WRONG-PWD")); // Invalid
 					}
-				}catch(IOException e){
+				}catch(ClassNotFoundException | IOException e){
 					e.printStackTrace();
 				}
 			}

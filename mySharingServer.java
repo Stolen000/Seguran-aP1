@@ -430,6 +430,21 @@ public class mySharingServer{
 							}
 							//Se a ws contem o user como owner ou utilizador
 							outStream.writeObject("OK");
+							
+							//ENVIAR A CHAVE DO WS do USER cifrada
+							StringBuilder pathWSPassUserEncrypted = new StringBuilder();
+							pathWSPassUserEncrypted.append("workspacesFolder")
+											.append(File.separator)
+											.append(workspaceUPPath)
+											.append(File.separator)
+											.append(workspaceUPPath)
+											.append(".key.")
+											.append(username);
+							String pathWSPassUserEncryptedFinal = pathWSPassUserEncrypted.toString();
+							privateFunctions.sendFile(outStream, pathWSPassUserEncryptedFinal);
+
+
+							//Recebe os ficheiros
 							receiveFilesAndRespond(outStream, inStream, arrayDeArgumentos, workspaceUPPath);
 							break;
 
@@ -802,6 +817,21 @@ public class mySharingServer{
 			File ficheiroAtual;
 			boolean readBool;
 			StringBuilder pathFicheiroAtualSb;
+
+			//ENVIAR A CHAVE DO WS do USER cifrada
+			String workspaceUPPath = arrayDeArgumentos[1];
+			StringBuilder pathWSPassUserEncrypted = new StringBuilder();
+			pathWSPassUserEncrypted.append("workspacesFolder")
+							.append(File.separator)
+							.append(workspaceUPPath)
+							.append(File.separator)
+							.append(workspaceUPPath)
+							.append(".key.")
+							.append(username);
+			String pathWSPassUserEncryptedFinal = pathWSPassUserEncrypted.toString();
+			privateFunctions.sendFile(outputStream, pathWSPassUserEncryptedFinal);
+			
+			//Ciclo principal 
 			for (int i = 2; i < arrayDeArgumentos.length; i++) {
 				pathFicheiroAtualSb = new StringBuilder();
 				pathFicheiroAtualSb.append("workspacesFolder")

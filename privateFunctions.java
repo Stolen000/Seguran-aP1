@@ -47,7 +47,7 @@ public class privateFunctions {
             if(workspace != null){
 				File workspaceFolder = new File("workspacesFolder" + File.separator + workspace);
 				
-                pathname = "workspacesFolder"+ File.separator + workspace + File.separator + pathname;
+                pathname = "workspacesFolder" + File.separator + workspace + File.separator + pathname;
             } 
             //Criar o ficheiro
 			File file = new File(pathname);

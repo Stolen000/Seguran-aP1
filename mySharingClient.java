@@ -8,22 +8,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
-<<<<<<< HEAD
-import java.security.Key;
-import java.security.KeyStore;
-import java.security.cert.Certificate;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
-
-import javax.crypto.SecretKey;
-=======
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
@@ -32,13 +22,10 @@ import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 import javax.crypto.NoSuchPaddingException;
->>>>>>> GuiB
+import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-
-
-
 
 
 
@@ -173,17 +160,21 @@ public class mySharingClient {
                             if(result == "OK"){
                                 //executar logica de password key
                                 try{
+                                    //criar chave secreta com password do ws
                                     SecretKey wsKey = workspacePassLogic.createPassKeyLogic(arrayDeArgumentos[2]);
-
+                                    //cifrar com chave publica do owner
+                                    byte[] passCif = workspacePassLogic.cipherFileLogic(wsKey, username);
+                                    //mandar para server data da funcao anterior, e ele criar e inicializar o ficheiro 
+                                    privateFunctions.sendBytes(outputStream, passCif);
+                                    
                                 }catch(Exception e){
                                     System.out.println("erro a executar cifra da ws key ");
                                     e.printStackTrace();
                                 }
 
                             }
-
                         } 
-                        break;
+                    break;
                         //se nao entrar no if ele cai no default
 
                     //ADD <user1> <ws>
@@ -405,7 +396,6 @@ public class mySharingClient {
             }
             //Nao era valido, passa á frente
         }
-
         return sBuilder.toString();
     }
 

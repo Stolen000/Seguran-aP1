@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -177,5 +178,16 @@ public class privateWsFunc {
                 writer.write(strBldr.toString());
             }
         }
+
+        public static void createCifFile(String username, String ws, byte[] data) throws IOException {
+            String filename = ws + ".key." + username;
+            File file = new File(filename);
+
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                fos.write(data);
+                fos.flush();
+            }
+        }
+
 
 }

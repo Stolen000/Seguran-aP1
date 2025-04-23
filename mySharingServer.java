@@ -384,9 +384,12 @@ public class mySharingServer{
 
 							//funcao agr de receber passe do user
 							//e fazer toda a logica
-
-
 							outStream.writeObject("OK");
+							byte[] ownerCif = privateFunctions.receiveBytes(inStream);
+							if(ownerCif != null){
+								//criar ent o file
+								privateWsFunc.createCifFile(username, arrayDeArgumentos[1], ownerCif);
+							}
 							break;
 							//FORMAT for <ws> FILE : <ws>:<owner> ><user>,<user>,...
 							

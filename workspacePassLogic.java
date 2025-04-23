@@ -32,14 +32,14 @@ public class workspacePassLogic {
     }
 
     //enviar os bytes da cifra para depois no servidor colocar num ficheiro coeso
-    public static byte[] cipherFileLogic(SecretKey secretKey, String user) throws Exception {
+    public static byte[] cipherFileLogic(SecretKey secretKey, String alias) throws Exception {
         //
         FileInputStream kfile = new FileInputStream("keystore.server");  //keystore
         KeyStore kstore = KeyStore.getInstance("JCEKS");
         kstore.load(kfile, "keypass".toCharArray());           //password para aceder à keystore
 
         //verificar qual o alias que identifica o user para retirar o seu certificado
-        Certificate cert = kstore.getCertificate(user);  //alias do utilizador
+        Certificate cert = kstore.getCertificate(alias);  //alias do utilizador
         //
         PublicKey publicKey = cert.getPublicKey(); //chave publica
 
@@ -85,4 +85,5 @@ public class workspacePassLogic {
     //cria o ficheiro cifra com ws.key.userToAdd
     //enviar para o servidor -- para o ws criado
 
+    
 }

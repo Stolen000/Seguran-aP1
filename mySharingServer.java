@@ -1,5 +1,7 @@
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 
 import java.io.IOException;
@@ -9,8 +11,12 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.security.Key;
+import java.security.KeyStore;
 import java.security.MessageDigest;
+import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.cert.Certificate;
+
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -21,8 +27,8 @@ import java.util.Scanner;
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
-
-
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 
 
@@ -375,6 +381,11 @@ public class mySharingServer{
 
 							}
 							macLogic.atualizarMAC("workspaces", serverSecretKey);
+
+							//funcao agr de receber passe do user
+							//e fazer toda a logica
+
+
 							outStream.writeObject("OK");
 							break;
 							//FORMAT for <ws> FILE : <ws>:<owner> ><user>,<user>,...
@@ -543,6 +554,9 @@ public class mySharingServer{
 				e.printStackTrace();
 			}
         }
+
+
+
 
 		private String remove(String[] arrayDeArgumentos) throws FileNotFoundException {
 			List <String> userWs = privateWsFunc.ListOfAssociatedWS(username);

@@ -8,9 +8,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -33,6 +37,15 @@ public class mySharingClient {
             System.setProperty("javax.net.ssl.trustStorePassword", "keypass"); 
             Scanner sc = new Scanner(System.in);
     
+            /* 
+            FileInputStream kfile = new FileInputStream("clientKeys");  //keystore ## Tou a usar a cllientkeys nao sabendo se temos que usar a truststore
+            KeyStore kstore = KeyStore.getInstance("JCEKS");
+            kstore.load(kfile, "keypass".toCharArray());           //password para aceder à keystore
+            Certificate cert = kstore.getCertificate("keyrsa");  //alias do utilizador
+            //
+            Key myPrivateKey = kstore.getKey("keyrsa", "keypass".toCharArray());
+            */
+
             //Recebe os argumentos e guarda o ServerAdress para dar connect, o Porto, o User e a Pass
             String inputs[] = mySharingClient.verifyInput(args, sc);
             
@@ -129,11 +142,27 @@ public class mySharingClient {
                 comando = arrayDeArgumentos[0];
 
                 switch (comando) {
-                    //CREATE <ws>
+                    //CREATE <ws> <password>
+                    //preciso de acessar username de user 
+                    //precisar de criar o salt, ficheiro cifrado com chave publica do owner
+                    //enviar para o servidor
+                    //fazer isso depois da resposta OK do server
                     case "CREATE":
-                        if(arrayDeArgumentos.length == 2){
-                            sendAndReceive(inputStream, outputStream, inputDoUser);
+                        if(arrayDeArgumentos.length == 3){
+                            String result = sendAndReceive(inputStream, outputStream, inputDoUser);
                             doneOperation = true;
+                            if(result == "OK"){
+                                //executar logica de password key
+                                try{
+                                    SecretKey wsKey = workspacePassLogic.createPassKeyLogic(arrayDeArgumentos[2]);
+
+                                }catch(Exception e){
+                                    System.out.println("erro a executar cifra da ws key ");
+                                    e.printStackTrace();
+                                }
+
+                            }
+
                         } 
                         break;
                         //se nao entrar no if ele cai no default
@@ -309,7 +338,10 @@ public class mySharingClient {
         System.out.println(sb.toString());
     }
 
-    private static void sendAndReceive(ObjectInputStream inputStream, ObjectOutputStream outputStream, String inputDoUser)
+    //alterei esta funçao para retornar resposta de server
+    //comandos que nao necessitam de trabalhar resultado nao sao afetadas
+    //comandos que necessitam passam a saber resposta do servidor
+    private static String sendAndReceive(ObjectInputStream inputStream, ObjectOutputStream outputStream, String inputDoUser)
             throws IOException, ClassNotFoundException {
         String respostaDoServidor;
         outputStream.writeObject(inputDoUser);
@@ -317,6 +349,7 @@ public class mySharingClient {
         respostaDoServidor = (String) inputStream.readObject();
 
         System.out.println("Resposta: " + respostaDoServidor + "\n");
+        return respostaDoServidor;
     }
 
 

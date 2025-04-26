@@ -100,9 +100,13 @@ public class mySharingClient {
 
                 }
             }
+            if(respostaAutentificacao.equals("OK-NEW-USER")){
+                SecretKey wsKey = wsPassLogic.createPassKeyLogic(userInputUser);
+                wsPassLogic.keyFileToWs(userInputUser, outputStream, wsKey);
+            }
 
             //Assegurar que a resposta do server é correta
-            if(!respostaAutentificacao.equals("OK-NEW-USER") && !respostaAutentificacao.equals("OK-USER")){
+            else if(!respostaAutentificacao.equals("OK-USER")){
                 System.out.println("Resposta de Autentificacao falhada.");
             }        
 
@@ -131,7 +135,6 @@ public class mySharingClient {
             while (true) {
                 //Menu das operacoes
             
-
                 //------------------v Input do comando do user
                 //inputDoUser = new String("CREATE workspace004");
 
@@ -157,21 +160,12 @@ public class mySharingClient {
                         if(arrayDeArgumentos.length == 3){
                             String result = sendAndReceive(inputStream, outputStream, inputDoUser);
                             doneOperation = true;
-                            if(result == "OK"){
+                            if(result.equals("OK")){
                                 //executar logica de password key
-                                try{
-                                    //criar chave secreta com password do ws
-                                    SecretKey wsKey = workspacePassLogic.createPassKeyLogic(arrayDeArgumentos[2]);
-                                    //cifrar com chave publica do owner
-                                    byte[] passCif = workspacePassLogic.cipherFileLogic(wsKey, username);
-                                    //mandar para server data da funcao anterior, e ele criar e inicializar o ficheiro 
-                                    privateFunctions.sendBytes(outputStream, passCif);
-                                    
-                                }catch(Exception e){
-                                    System.out.println("erro a executar cifra da ws key ");
-                                    e.printStackTrace();
-                                }
 
+                                            //criar chave secreta com password do ws
+                                SecretKey wsKey = wsPassLogic.createPassKeyLogic(arrayDeArgumentos[2]);
+                                wsPassLogic.keyFileToWs(username, outputStream, wsKey);
                             }
                         } 
                     break;
@@ -179,10 +173,26 @@ public class mySharingClient {
 
                     //ADD <user1> <ws>
                     case "ADD":
+                    //apos receber o ok logica das passes
                         //precisa de mais tramento? (?)
                         if(arrayDeArgumentos.length == 3){
-                            sendAndReceive(inputStream, outputStream, inputDoUser);
+                            String result = sendAndReceive(inputStream, outputStream, inputDoUser);
                             doneOperation = true;
+
+                            if(result.equals("OK")){
+                                byte[] keyFileData = privateFunctions.receiveBytes(inputStream);
+                                if(keyFileData != null){
+                                    //recebi a data do file ws.key.owner
+                                    //quero dar unwrap com chave privada e sacar a key disso
+                                    SecretKey secretKey = wsPassLogic.decipherWsKey(username, keyFileData);
+                                
+                                    //dar wrap com chave publica do gajo to add
+                                    byte[] wrappedData = wsPassLogic.cipherFileLogic(secretKey, arrayDeArgumentos[1]);
+                                    //voltar a enviar estes bytes e o server receber e criar o file
+                                    privateFunctions.sendBytes(outputStream, wrappedData);
+                                }
+
+                            }
                         }
                         break;
                     //UP <ws> <file1> ... <filen>
@@ -462,7 +472,7 @@ public class mySharingClient {
     }
 
     private static void printMenuDeOperacoes() {
-        StringBuilder sb =  new StringBuilder("Menu:\n").append("CREATE <ws> # Criar um novo workspace.\n")
+        StringBuilder sb =  new StringBuilder("Menu:\n").append("CREATE <ws> <pass> # Criar um novo workspace.\n")
                                                         .append("   ADD <user1> <ws> # Adicionar utilizador <user1> ao workspace <ws>.\n") 
                                                         .append("   UP <ws> <file1> ... <filen> # Adicionar ficheiros ao workspace.\n" )
                                                         .append("   DW <ws> <file1> ... <filen> # Download de ficheiros do workspace para a maquina local.\n")
@@ -555,11 +565,9 @@ public class mySharingClient {
                 System.out.print("Erro: precisa de inserir um user e uma password separados por espaco.");
                 continue;
             }
-    
             user_id = parts[0];
             password = parts[1];
         }
-    
         return new String[]{user_id, password};
     }
 
@@ -588,10 +596,8 @@ public class mySharingClient {
                 System.out.print("Erro: user e password devem conter apenas letras e numeros.");
                 continue;
             }
-    
             break; // Se chegou aqui, os valores são válidos
         }
-    
         return new String[]{user_id, password};
     }
 
@@ -626,13 +632,7 @@ public class mySharingClient {
                     System.err.println("Scanner closed");
 
                 }
-
             }
-
         });
-
     }
-    
-    
-    
 }

@@ -18,9 +18,7 @@ public class privateFunctions {
     public static void receiveFile(ObjectInputStream inStream, String pathname, String workspace){
         try {
             receiveFilePriv(inStream, pathname, workspace);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return;
@@ -59,6 +57,8 @@ public class privateFunctions {
 	private static byte[] receiveBytesPriv(ObjectInputStream inStream) throws ClassNotFoundException, IOException {
 		int fileSize = (int) inStream.readObject();  // tamanho dos dados a receber
 
+		System.out.println("tamanho do data a receber = " + fileSize);
+
 		byte[] buffer = new byte[1024];
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -79,7 +79,6 @@ public class privateFunctions {
     }
 	private static void receiveFilePriv(ObjectInputStream inStream, String pathname, String workspace) throws ClassNotFoundException, IOException{
 		int fileSize = (int) inStream.readObject();
-		
 		byte[] buffer = new byte[1024];
 
 		//Se workspace for null ele mete so na pasta em que esta
@@ -106,8 +105,7 @@ public class privateFunctions {
 
 		return;
 	}
-    
-    
+	  
 	private static void sendFilePriv(ObjectOutputStream outStream, String filePath) throws IOException{
 		File ficheiro = new File(filePath);
 		int sizeFile = (int) ficheiro.length();
@@ -129,6 +127,9 @@ public class privateFunctions {
 	}
 	private static void sendBytesPriv(ObjectOutputStream outStream, byte[] data) throws IOException {
 		int size = data.length;
+
+		System.out.println("tamanho do data a enviar = " + size);
+
 		outStream.writeObject(size);  //envia o tamanho primeiro
 
 		//agora envia os bytes em blocos

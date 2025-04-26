@@ -214,18 +214,14 @@ public class macLogic {
                 //acabei de atualziar o MAC
                 //estava assim
                 //e agr estah assim
-                System.out.println("dentro do atualizar ficheiro neste caso " + filename);
 
-                System.out.println("estava assim :" + getMacFromFile(filename));
 
                 String novoMacBase64 = calcularMACBase64(filename, key);
-                System.out.println("vai ter de estar assim daqui a bocado" + novoMacBase64);
 
                 if (novoMacBase64 != null) {
                     String macFileName = filename + ".mac";
                     Files.write(Paths.get(macFileName), novoMacBase64.getBytes());
                 }
-                System.out.println("e agora atualizou assim no file" + getMacFromFile(filename));
 
             } catch (Exception e) {
                 System.err.println("MAC nao foi atualizado " + e.getMessage());
@@ -243,7 +239,6 @@ public class macLogic {
 
                 Files.write(path, Collections.singletonList(macResult), StandardCharsets.UTF_8);
 
-                System.out.println("MAC gerado para o file " + macFileName + ".txt : " + macResult);
             } catch (Exception e) {
                 System.out.println("Ocorreu um erro ao criar o ficheiro MAC: " + e.getMessage());
             }
@@ -265,7 +260,6 @@ public class macLogic {
             try (Scanner sc = new Scanner(file)) {
                 if (sc.hasNextLine()) {
                     String macLine = sc.nextLine();
-                    System.out.println("esta eh a linha dentro do get mac file " + filename + " mac: " + macLine);
                     mac = macLine.trim(); //assumindo que o ficheiro mac a ler so tem uma linha corrida
                 }
             } catch (FileNotFoundException e) {

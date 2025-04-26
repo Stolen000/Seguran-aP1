@@ -141,6 +141,7 @@ public class privateWsFunc {
 				}
 				sb.append("AutoWorkspace-").append(username);
 				escreveLinhaNovaDoWsFile(sb.toString(),username);
+                
 			}catch(IOException e){
 				e.printStackTrace();
 			}
@@ -180,9 +181,11 @@ public class privateWsFunc {
         }
 
         public static void createCifFile(String username, String ws, byte[] data) throws IOException {
-            String filename = ws + ".key." + username;
+            String filename = "workspacesFolder" + File.separator + ws + File.separator + ws + ".key." + username;
             File file = new File(filename);
-
+            if(!file.exists()){
+                file.createNewFile();
+            }
             try (FileOutputStream fos = new FileOutputStream(file)) {
                 fos.write(data);
                 fos.flush();

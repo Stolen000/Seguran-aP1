@@ -124,11 +124,9 @@ public class mySharingServer{
 		else{
 
 			String previousMacFile = macLogic.getMacFromFile(filename);
-			System.out.println("Previous mac " + filename + " = " + previousMacFile);
 			
 			String calcdMacFile = macLogic.calcularMACBase64(filename, serverSecretKey);
-			System.out.println("Calcd mac " + filename + " =" + calcdMacFile);
-			System.out.println("////");//for debug
+
 
 			fileVerify = macLogic.compareMacs(previousMacFile, calcdMacFile);		
 		}
@@ -156,6 +154,7 @@ public class mySharingServer{
 				macLogic.createMacFile(filename, serverSecretKey);
 				verify = true;
 			}
+			//trocar isto
 			else{
 				System.out.println("Fizeste uma açao demasiado imprevisivel agora vou queimar o CPU por raiva!");
 				System.exit(1);
@@ -182,12 +181,10 @@ public class mySharingServer{
 	
 			if (saltFile.exists()) {
 				systemSalt = Files.readAllBytes(saltFile.toPath());
-				System.out.println("Salt carregado com sucesso.");
 			} else {
 				SecureRandom random = new SecureRandom();
 				random.nextBytes(systemSalt);
 				Files.write(saltFile.toPath(), systemSalt);
-				System.out.println("Salt gerado e guardado com sucesso.");
 			}
 		} catch (IOException e) {
 			System.err.println("Erro ao lidar com o ficheiro de salt: " + e.getMessage());
@@ -357,7 +354,7 @@ public class mySharingServer{
 
 							//verificar mac de ws
 							if(!verifyFileMac("workspaces")){
-								System.out.println("No autentication ficheiro workspace MAC estava corrompido");
+								System.out.println("No Create ficheiro workspace MAC estava corrompido");
 								System.out.println("Tenho pena mas vou fechar");
 								System.exit(1); 
 							}
@@ -388,6 +385,7 @@ public class mySharingServer{
 							byte[] ownerCif = privateFunctions.receiveBytes(inStream);
 							if(ownerCif != null){
 								//criar ent o file
+								System.out.print("entrei dentro do if no server CREATE");
 								privateWsFunc.createCifFile(username, arrayDeArgumentos[1], ownerCif);
 							}
 							break;
@@ -415,11 +413,30 @@ public class mySharingServer{
 
 							//procurar o ws e vê se o user é o owner
 							//----------------------Checkar se <ws> já existe ou n
-							outStream.writeObject(privateWsFunc.addUserToWS(arrayDeArgumentos[2], arrayDeArgumentos[1], username));
+							String result = privateWsFunc.addUserToWS(arrayDeArgumentos[2], arrayDeArgumentos[1], username);
+							outStream.writeObject(result);
 							//-----------------------------
 
+							if(result.equals("OK")){
+								macLogic.atualizarMAC("workspaces", serverSecretKey);
+								//enviar data do ficheiro com path do user
+								String filepath = "workspacesFolder" + File.separator + arrayDeArgumentos[2] + File.separator + arrayDeArgumentos[2] + ".key." + username;
+								privateFunctions.sendFile(outStream, filepath);
+
+								//depois receber data do ficheiro novo
+								byte[] wrappedData = privateFunctions.receiveBytes(inStream);
+								if(wrappedData != null){
+									privateWsFunc.createCifFile(arrayDeArgumentos[1], arrayDeArgumentos[2], wrappedData);
+								}
+								else{
+									System.out.println("Ocorreu um erro no add no server a receber bytes");
+									return;
+								}
+								//assumir que recebemos bem os dados agr eh criar o ficheiro ws.key.userToAdd
+								//agarrar na data e fazer ficheiro com path do user a adicionar
+							}
+							
 							//atualizar ficheiro de ws com novo user no ws assigned
-							macLogic.atualizarMAC("workspaces", serverSecretKey);
 							break;
 							
 						//UP <ws> <file1> ... <filen>
@@ -572,9 +589,8 @@ public class mySharingServer{
 				e.printStackTrace();
 			}
         }
-
-
-
+		
+		
 
 		private String remove(String[] arrayDeArgumentos) throws FileNotFoundException {
 			List <String> userWs = privateWsFunc.ListOfAssociatedWS(username);
@@ -654,6 +670,14 @@ public class mySharingServer{
 							outStream.writeObject("OK-NEW-USER");
 							//System.out.println("NOVO USER!!!");;
 							privateWsFunc.create_new_ws(inputUsername);
+
+							byte[] ownerCif = privateFunctions.receiveBytes(inStream);
+							if(ownerCif != null){
+								//criar ent o file
+								System.out.println("entrei dentro do if no server authentication a criar para o ws automatico");
+								String wsPath = "AutoWorkspace-" + inputUsername;
+								privateWsFunc.createCifFile(inputUsername, wsPath, ownerCif);
+							}
 							macLogic.atualizarMAC("workspaces", serverSecretKey);
 							autentificado = true;
 							
@@ -697,6 +721,14 @@ public class mySharingServer{
 							outStream.writeObject("OK-NEW-USER"); // User novo
 							//System.out.println("NOVO USER!!! PORQUE NAO ENCONTROU NENHUM");;
 							privateWsFunc.create_new_ws(inputUsername);
+
+							byte[] ownerCif = privateFunctions.receiveBytes(inStream);
+							if(ownerCif != null){
+								//criar ent o file
+								System.out.println("entrei dentro do if no server authentication a criar para o ws automatico");
+								String wsPath = "AutoWorkspace-" + inputUsername;
+								privateWsFunc.createCifFile(inputUsername, wsPath, ownerCif);
+							}
 							macLogic.atualizarMAC("workspaces", serverSecretKey);
 							autentificado = true;
 						}

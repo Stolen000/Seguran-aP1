@@ -473,7 +473,7 @@ public class mySharingServer{
 											.append(username);
 							String pathWSPassUserEncryptedFinal = pathWSPassUserEncrypted.toString();
 							privateFunctions.sendFile(outStream, pathWSPassUserEncryptedFinal);
-
+							System.out.println("Apos enviar chave cifrada");
 
 							//Recebe os ficheiros
 							receiveFilesAndRespond(outStream, inStream, arrayDeArgumentos, workspaceUPPath);

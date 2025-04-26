@@ -1,5 +1,6 @@
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -210,10 +211,10 @@ public class mySharingClient {
                             //RECEBE A PASS DO WS ENCRYPTADA COM A SUA CHAVE PUBLICA
                             //Declaraçao de vars para a decif
                             FileInputStream fis;
-                            ObjectInputStream ois;
                             
                             privateFunctions.receiveFile(inputStream, arrayDeArgumentos[1] + ".key." + username , null );
-
+                            File wsKey = new File(arrayDeArgumentos[1] + ".key." + username);
+                            System.out.println("Apos receber chave cifrada");
                             //DECIFRA COM A SUA CHAVE PRIVADA
                             //-Ir buscar a sua chave privada do seu certificado/truststore
                             //
@@ -223,30 +224,35 @@ public class mySharingClient {
                             //Certificate cert = kstore.getCertificate("keyrsa");  //alias do utilizador
                             //
                             Key myPrivateKey = kstore.getKey("keyrsa", "keypass".toCharArray());
-
                             //- Iniciar decifracao da chave do WS.
 
-                            Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
+                            Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");//PBEWithHmacSHA256AndAES_128
                             fis = new FileInputStream(arrayDeArgumentos[1] + ".key." + username);
-                            ois = new ObjectInputStream(fis);
-                            byte[] wrapedkey = (byte[]) ois.readObject();
 
+                            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                            int bytesRead;
+                            byte[] data = new byte[4096];
 
+                            while ((bytesRead = fis.read(data, 0, data.length)) != -1) {
+                                buffer.write(data, 0, bytesRead);
+                            }
+                            byte[] wrapedkey = buffer.toByteArray();
+
+                            
                             Cipher desencryptWithPublicKey = Cipher.getInstance("RSA");
                             desencryptWithPublicKey.init(Cipher.UNWRAP_MODE, myPrivateKey);
-
+                           
                             Key unwrappedKey = desencryptWithPublicKey.unwrap(wrapedkey,"PBEWithHmacSHA256AndAES_128",Cipher.SECRET_KEY);
 
                             //--Fechar vars
                             fis.close();
-                            ois.close();
 
                             c.init(Cipher.ENCRYPT_MODE, unwrappedKey);
                             
                             //CIFRA OS FICHEIROS COM A CHAVE DO WS
-                            
                             //ENVIA ESSES FICHEIROS (CIFRADOS LA DENTRO)
                             System.out.println(uploadFicheiros(inputStream, outputStream, arrayDeArgumentos,c));
+                            wsKey.delete();
                             doneOperation = true;
                         }    
                         break;    
@@ -319,8 +325,7 @@ public class mySharingClient {
         FileInputStream fis;
         FileOutputStream fos;
         CipherInputStream cis;
-        ObjectInputStream ois;
-        privateFunctions.receiveFile(inputStream, arrayDeArgumentos[1] + ".key." + username , null );        
+        privateFunctions.receiveFile(inputStream, arrayDeArgumentos[1] + ".key." + username , null);        
         //Desencripta
         //DECIFRA COM A SUA CHAVE PRIVADA
         //-Ir buscar a sua chave privada do seu certificado/truststore
@@ -331,25 +336,33 @@ public class mySharingClient {
         //Certificate cert = kstore.getCertificate("keyrsa");  //alias do utilizador
         //
         Key myPrivateKey = kstore.getKey("keyrsa", "keypass".toCharArray());
-
+        File keyFile = new File(arrayDeArgumentos[1] + ".key." + username);
         //- Iniciar decifracao da chave do WS.
 
-        Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
-        fis = new FileInputStream(arrayDeArgumentos[1] + ".key." + username);
-        ois = new ObjectInputStream(fis);
-        byte[] wrapedkey = (byte[]) ois.readObject();
+        Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128"); //PBEWithHmacSHA256AndAES_128
+        fis = new FileInputStream(keyFile);
+        
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        int bytesRead;
+        byte[] data = new byte[4096];
+
+        while ((bytesRead = fis.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, bytesRead);
+        }
+        byte[] wrapedkey = buffer.toByteArray();
 
 
         Cipher desencryptWithPublicKey = Cipher.getInstance("RSA");
         desencryptWithPublicKey.init(Cipher.UNWRAP_MODE, myPrivateKey);
 
-        Key unwrappedKey = desencryptWithPublicKey.unwrap(wrapedkey,"PBEWithHmacSHA256AndAES_128",Cipher.SECRET_KEY);
+        Key unwrappedKey =  desencryptWithPublicKey.unwrap(wrapedkey,"PBEWithHmacSHA256AndAES_128",Cipher.SECRET_KEY);
+        //SecretKey unwrappedKey = wsPassLogic.decipherWsKey(username, wrapedkey);
 
         //--Fechar vars
         fis.close();
-        ois.close();
+        
 
-        c.init(Cipher.DECRYPT_MODE, unwrappedKey);        
+        c.init(Cipher.DECRYPT_MODE, unwrappedKey);        //Erro? Invalid Key
         
         //Percorre todos os ficheiros
         for (int i = 2; i < arrayDeArgumentos.length; i++) {
@@ -456,6 +469,8 @@ public class mySharingClient {
                     fis.close();
                     fos.close();
                     privateFunctions.sendFile(outputStream, pathFicheiroAtual + ".enc");
+                    File enc = new File(pathFicheiroAtual + ".enc");
+                    enc.delete();
                 } 
                 // Append no strBuilder a resposta do server
                 respostaDoServer = (String) inputStream.readObject();

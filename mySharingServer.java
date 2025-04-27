@@ -569,6 +569,7 @@ public class mySharingServer{
 								String filepath = "workspacesFolder" + File.separator + arrayDeArgumentos[1];
 								File wsFolder = new File(filepath);
 								String [] files = wsFolder.list();
+								 
 								outStream.writeObject(privateFunctions.formatMsg(files));
 							}
 							else{
@@ -846,6 +847,7 @@ public class mySharingServer{
 					if(isFileNewInThisWS){
 						//Ficheiro é novo logo pode receber
 						privateFunctions.receiveFile(inStream, pathname, workspacePath);
+						privateFunctions.receiveFile(inStream, pathname + ".signed." + username, workspacePath);
 						stringDeResposta = "OK";
 					} else {
 						//Existe um ficheiro com o mesmo nome no servidor
@@ -863,9 +865,12 @@ public class mySharingServer{
 			String[] arrayDeArgumentos) throws IOException, ClassNotFoundException{
 					
 			String pathFicheiroAtual;
+			String signAtual;
 			File ficheiroAtual;
+			File filesignAtual;
 			boolean readBool;
 			StringBuilder pathFicheiroAtualSb;
+			StringBuilder pathSigntualSb;
 
 			//ENVIAR A CHAVE DO WS do USER cifrada
 			String workspaceUPPath = arrayDeArgumentos[1];
@@ -879,6 +884,10 @@ public class mySharingServer{
 							.append(username);
 			String pathWSPassUserEncryptedFinal = pathWSPassUserEncrypted.toString();
 			privateFunctions.sendFile(outputStream, pathWSPassUserEncryptedFinal);
+
+			File wsFolder = new File("workspacesFolder" + File.separator + arrayDeArgumentos[1]);
+			File [] fileArray = wsFolder.listFiles();
+			
 			
 			//Ciclo principal 
 			for (int i = 2; i < arrayDeArgumentos.length; i++) {
@@ -901,6 +910,24 @@ public class mySharingServer{
 					if(readBool){
 						//Validou entao envia ficheiro
 						privateFunctions.sendFile(outputStream, pathFicheiroAtual);
+						for (File file : fileArray) {
+							System.out.println(file.toPath().toString());
+							if(file.toString().contains(arrayDeArgumentos[i] + ".signed.")){
+								System.out.println("Encontrou este: " + file.toString());
+								pathSigntualSb = new StringBuilder();
+								pathSigntualSb.append("workspacesFolder")
+												.append(File.separator)
+												.append(arrayDeArgumentos[1])
+												.append(File.separator)
+												.append(file.toString());
+								signAtual = pathSigntualSb.toString();
+
+
+								privateFunctions.sendBytes(outputStream, file.toString().getBytes());
+								//File signFile = new File(signAtual);
+								privateFunctions.sendBytes(outputStream, Files.readAllBytes(file.toPath()));
+							}
+						}
 					} 
 				} else {
 					//envia o "-1" como pathname para simbolizar nao existe no ws ao cliente

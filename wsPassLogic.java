@@ -2,10 +2,12 @@ import java.io.FileInputStream;
 import java.io.ObjectOutputStream;
 import java.security.Key;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
+import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -14,6 +16,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class wsPassLogic {
+    
 
     public static SecretKey createPassKeyLogic(String pass){
 		byte[] passSalt = new byte[16]; 
@@ -31,6 +34,21 @@ public class wsPassLogic {
         }
         return null;
 
+    }
+    public static Key createPassKeyLogic2(String password) {
+        byte[] salt = { (byte) 0xc9, (byte) 0x36, (byte) 0x78, (byte) 0x99, (byte) 0x52, (byte) 0x3e, (byte) 0xea, (byte) 0xf2 };
+        PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, 20); // pass, salt, iterations
+        SecretKeyFactory kf;
+        try {
+            kf = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
+            SecretKey key;
+            key = kf.generateSecret(keySpec);
+            return key;
+        
+        } catch (Exception e) {
+            e.printStackTrace();
+        } 
+        return null;
     }
 
     //enviar os bytes da cifra para depois no servidor colocar num ficheiro coeso
@@ -84,6 +102,28 @@ public class wsPassLogic {
         return null;
     }
 
+    public static SecretKey decipherWsKey2(String user, byte[] wrappedKey){
+        try{
+            FileInputStream kfile = new FileInputStream("clientKeys");
+            //se for esta a instance da keyStore
+            KeyStore kstore = KeyStore.getInstance("JCEKS");
+            kstore.load(kfile, "keypass".toCharArray());  
+    
+            //assumindo que o alias eh o user
+            Key privateKey = kstore.getKey(user, "keypass".toCharArray()); 
+    
+            Cipher cipher = Cipher.getInstance("RSA");
+            cipher.init(Cipher.UNWRAP_MODE, privateKey);
+            SecretKey secretKey = (SecretKey) cipher.unwrap(wrappedKey, "PBEWithHmacSHA256AndAES_128", Cipher.SECRET_KEY);
+    
+            return secretKey;
+        }catch(Exception e){;
+            System.out.println("Ocorreu um erro a decifrar secretkey no user ADD");
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public static void keyFileToWs(String username, ObjectOutputStream outputStream, SecretKey wsKey){
         try{
             //cifrar com chave publica do owner
@@ -97,6 +137,8 @@ public class wsPassLogic {
             e.printStackTrace();
         }
     }
+
+    
 
     //quando owner faz create
     //vem o owner

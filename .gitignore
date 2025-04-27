@@ -13,7 +13,6 @@
 # Ignorar keystores e certificados (opcional)
 *.cer
 *.server
-*.client
 
 
 *.mac

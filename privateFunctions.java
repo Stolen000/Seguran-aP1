@@ -57,7 +57,7 @@ public class privateFunctions {
 	private static byte[] receiveBytesPriv(ObjectInputStream inStream) throws ClassNotFoundException, IOException {
 		int fileSize = (int) inStream.readObject();  // tamanho dos dados a receber
 
-		System.out.println("tamanho do data a receber = " + fileSize);
+		//System.out.println("tamanho do data a receber = " + fileSize);
 
 		byte[] buffer = new byte[1024];
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -128,7 +128,7 @@ public class privateFunctions {
 	private static void sendBytesPriv(ObjectOutputStream outStream, byte[] data) throws IOException {
 		int size = data.length;
 
-		System.out.println("tamanho do data a enviar = " + size);
+		//System.out.println("tamanho do data a enviar = " + size);
 
 		outStream.writeObject(size);  //envia o tamanho primeiro
 

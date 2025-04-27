@@ -51,15 +51,6 @@ public class mySharingClient {
             System.setProperty("javax.net.ssl.trustStore", "truststore.client");
             System.setProperty("javax.net.ssl.trustStorePassword", "keypass"); 
             Scanner sc = new Scanner(System.in);
-    
-            /* 
-            FileInputStream kfile = new FileInputStream("clientKeys");  //keystore ## Tou a usar a cllientkeys nao sabendo se temos que usar a truststore
-            KeyStore kstore = KeyStore.getInstance("JCEKS");
-            kstore.load(kfile, "keypass".toCharArray());           //password para aceder à keystore
-            Certificate cert = kstore.getCertificate("keyrsa");  //alias do utilizador
-            //
-            Key myPrivateKey = kstore.getKey("keyrsa", "keypass".toCharArray());
-            */
 
             //Recebe os argumentos e guarda o ServerAdress para dar connect, o Porto, o User e a Pass
             String inputs[] = mySharingClient.verifyInput(args, sc);
@@ -76,9 +67,7 @@ public class mySharingClient {
             createHookShutdown(inputStream, outputStream, clientSocket);
 
             if(mySharingClient.startAuthentication(inputStream, outputStream, inputs[2], inputs[3], sc)){
-                //Pode haver erros com o input[2]   !!!
                 mySharingClient.runClient(inputStream, outputStream, clientSocket, sc, inputs[2]);
-
             }
             sc.close();
     }
@@ -101,13 +90,10 @@ public class mySharingClient {
                 if (respostaInvalida) {
 
                     //Fica a repetir o processo até introduzir a password correta ou um novo user e pass
-
                     System.out.print("Resposta Invalida, tente novamente (eg: Beto seguranca2025): ");
                     String[] credentials = getValidCredentials(scanner);
                     userInputUser = credentials[0];
                     userInputPassword = credentials[1];
-                    //System.out.println("\nVoce digitou: " + userInputUser + "\n" + userInputPassword);
-
                 }
             }
             if(respostaAutentificacao.equals("OK-NEW-USER")){
@@ -222,55 +208,41 @@ public class mySharingClient {
                             FileInputStream fis;
                             
                             privateFunctions.receiveFile(inputStream, arrayDeArgumentos[1] + ".key." + username , null);
-                            File wsKey = new File(arrayDeArgumentos[1] + ".key." + username);
-                            System.out.println("Apos receber chave cifrada");
+                            
                             //DECIFRA COM A SUA CHAVE PRIVADA
                             //-Ir buscar a sua chave privada do seu certificado/truststore
                             //
-                            FileInputStream kfile = new FileInputStream("clientKeys");  //keystore ## Tou a usar a cllientkeys nao sabendo se temos que usar a truststore
-                            KeyStore kstore = KeyStore.getInstance("JCEKS");
+                            FileInputStream kfile = new FileInputStream("keystore." + username); 
+                            KeyStore kstore = KeyStore.getInstance("PKCS12");
                             kstore.load(kfile, "keypass".toCharArray());           //password para aceder à keystore
                             //Certificate cert = kstore.getCertificate("keyrsa");  //alias do utilizador
                             //
-                            System.out.println("ALias:" + username);
                             PrivateKey myPrivateKey = (PrivateKey) kstore.getKey(username, "keypass".toCharArray());
+                            File wsKey = new File(arrayDeArgumentos[1] + ".key." + username);
                             //- Iniciar decifracao da chave do WS.
 
                             Cipher c = Cipher.getInstance("AES");//PBEWithHmacSHA256AndAES_128
-                            fis = new FileInputStream(arrayDeArgumentos[1] + ".key." + username);
 
-                            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-                            int bytesRead;
-                            byte[] data = new byte[4096];
-
-                            while ((bytesRead = fis.read(data, 0, data.length)) != -1) {
-                                buffer.write(data, 0, bytesRead);
-                            }
-                            byte[] wrapedkey = buffer.toByteArray();
+                            byte[] wrapedkey = wsPassLogic.readToWrappedKey(wsKey);
                             //byte[] wrapedkey = fis.readAllBytes();
                             //decipherWsKey(username,wrapedkey);
                             
                             Cipher desencryptWithPublicKey = Cipher.getInstance("RSA");
                             desencryptWithPublicKey.init(Cipher.UNWRAP_MODE, myPrivateKey);
                            
-                            //Key unwrappedKey = desencryptWithPublicKey.unwrap(wrapedkey,"PBEWithHmacSHA256AndAES_128",Cipher.SECRET_KEY);
                             Key unwrappedKey = desencryptWithPublicKey.unwrap(wrapedkey,"AES",Cipher.SECRET_KEY);
 
-
                             //--Fechar vars
-                            fis.close();
+                            kfile.close();
 
                             c.init(Cipher.ENCRYPT_MODE, unwrappedKey);
                             //MUITO MAU MAS PARA TESTAR SIGNATURES, retirar var global after
-                            //b
-                            
-
                             
                             //CIFRA OS FICHEIROS COM A CHAVE DO WS
                             //ENVIA ESSES FICHEIROS (CIFRADOS LA DENTRO)
                             System.out.println(uploadFicheiros(inputStream, outputStream, arrayDeArgumentos,c, myPrivateKey, username));
                             wsKey.delete();
-                            kfile.close();
+                            
                             doneOperation = true;
                         }    
                         break;    
@@ -345,34 +317,25 @@ public class mySharingClient {
         FileInputStream fis;
         FileOutputStream fos;
         CipherInputStream cis;
+        
         privateFunctions.receiveFile(inputStream, arrayDeArgumentos[1] + ".key." + username , null); 
               
         //Desencripta
         //DECIFRA COM A SUA CHAVE PRIVADA
         //-Ir buscar a sua chave privada do seu certificado/truststore
         //
-        FileInputStream kfile = new FileInputStream("clientKeys");  //keystore ## Tou a usar a cllientkeys nao sabendo se temos que usar a truststore
-        KeyStore kstore = KeyStore.getInstance("JCEKS");
+        FileInputStream kfile = new FileInputStream("keystore." + username);  //keystore ## Tou a usar a cllientkeys nao sabendo se temos que usar a truststore
+        KeyStore kstore = KeyStore.getInstance("PKCS12");
         kstore.load(kfile, "keypass".toCharArray());           //password para aceder à keystore
-        Certificate cert = kstore.getCertificate(username);  //alias do utilizador
+        //Certificate cert = kstore.getCertificate(username);  //alias do utilizador
         //
         Key myPrivateKey = kstore.getKey(username, "keypass".toCharArray());
         File keyFile = new File(arrayDeArgumentos[1] + ".key." + username);
         //- Iniciar decifracao da chave do WS.
 
-       
         Cipher c = Cipher.getInstance("AES"); //PBEWithHmacSHA256AndAES_128
-
-        fis = new FileInputStream(keyFile);
         
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        int bytesRead;
-        byte[] data = new byte[4096];
-
-        while ((bytesRead = fis.read(data, 0, data.length)) != -1) {
-            buffer.write(data, 0, bytesRead);
-        }
-        byte[] wrapedkey = buffer.toByteArray();
+        byte[] wrapedkey = wsPassLogic.readToWrappedKey(keyFile);
 
         Cipher desencryptWithPublicKey = Cipher.getInstance("RSA");
         desencryptWithPublicKey.init(Cipher.UNWRAP_MODE, myPrivateKey);
@@ -381,9 +344,8 @@ public class mySharingClient {
         //SecretKey unwrappedKey = wsPassLogic.decipherWsKey(username, wrapedkey);
 
         //--Fechar vars
-        fis.close();
+        kfile.close();
         
-
         try {
             c.init(Cipher.DECRYPT_MODE, unwrappedKey);
         } catch (InvalidKeyException e) {
@@ -433,14 +395,19 @@ public class mySharingClient {
 
                     fis = new FileInputStream(filePathAtual);
                     fos = new FileOutputStream(filePathAtual + ".tmp");
-
-                    cis = new CipherInputStream(fis, c);
-                    byte[] b = new byte[16];
-                    int j = 0;
-                    while ((j=cis.read(b) ) != -1) {
-                    fos.write(b, 0, j);
+                    try {
+                        cis = new CipherInputStream(fis, c);
+                        byte[] b = new byte[16];
+                        int j = 0;
+                        while ((j=cis.read(b) ) != -1) {
+                        fos.write(b, 0, j);
+                        }
+                        cis.close();
+                    } catch (Exception e) {
+                        //System.err.println(e);
+                        System.out.println("Ficheiro Corrompido");
                     }
-                    cis.close();
+                    
                     fos.close();
                     fis.close();
                     //Verify signature
@@ -448,7 +415,6 @@ public class mySharingClient {
                     s.update(bufFicheiroAtual);
 
                     if (s.verify(signature)){
-                        System.out.println("File is valid");
                         // dah replace ao ficheiro encriptado
                         if (!encryptedFile.delete()) {
                             System.err.println("Error deleting encrypted file!");
@@ -457,7 +423,7 @@ public class mySharingClient {
                             System.err.println("Error renaming decripted file!");
                         }
                     } else{
-                        System.out.println("File was corrupted");
+                        System.out.println("Ficheiro Corrompido");
                         // dah replace ao ficheiro encriptado
                         if (!encryptedFile.delete()) {
                             System.err.println("Error deleting encrypted file!");
@@ -478,7 +444,6 @@ public class mySharingClient {
             }
             //Nao era valido, passa á frente
         }
-        kfile.close();
         return sBuilder.toString();
     }
 

@@ -37,10 +37,17 @@ public class mySharingServer{
 	//pass guardada no servidor colocada fora das threads
 	private static String serverPass;
 	private static Key serverSecretKey;
+	private static boolean wantMacUser;
+	private static boolean wantMacWs;
+
 	public static void main(String[] args) {
 
 		//colocar aqui afixacao de palavra passe
 		//e colocar aqui tambem secretKey?
+
+		wantMacUser = true;
+		wantMacWs = true;
+
 		System.out.println("Insira a Palavra passe para o Servidor");
 		Scanner sc = new Scanner(System.in);
 		serverPass = sc.nextLine();
@@ -156,8 +163,13 @@ public class mySharingServer{
 			}
 			//trocar isto
 			else{
-				System.out.println("Fizeste uma açao demasiado imprevisivel agora vou queimar o CPU por raiva!");
-				System.exit(1);
+				if(filename.equals("users")){
+					wantMacUser = false;
+				}
+				else{
+					wantMacWs = false;
+				}
+				System.out.println("Servidor vai ser executado sem ficheiros mac");
 			}
 		}
 		return verify;
@@ -377,7 +389,9 @@ public class mySharingServer{
 								privateWsFunc.escreveLinhaNovaDoWsFile(arrayDeArgumentos[1],username);
 
 							}
+							if(wantMacWs){
 							macLogic.atualizarMAC("workspaces", serverSecretKey);
+							}
 
 							//funcao agr de receber passe do user
 							//e fazer toda a logica
@@ -418,7 +432,10 @@ public class mySharingServer{
 							//-----------------------------
 
 							if(result.equals("OK")){
-								macLogic.atualizarMAC("workspaces", serverSecretKey);
+								if(wantMacWs){
+									macLogic.atualizarMAC("workspaces", serverSecretKey);
+								}
+								
 								//enviar data do ficheiro com path do user
 								String filepath = "workspacesFolder" + File.separator + arrayDeArgumentos[2] + File.separator + arrayDeArgumentos[2] + ".key." + username;
 								privateFunctions.sendFile(outStream, filepath);
@@ -666,7 +683,9 @@ public class mySharingServer{
 							//System.out.println("Arquivo vazio, adicionando primeira entrada...");
 							try (FileWriter writer = new FileWriter(db)) {
 								addNewUser(inputUsername,inputPassword,writer); //Usar a funcao para adicionar o user corretamente
-								macLogic.atualizarMAC("users", serverSecretKey);
+								if(wantMacUser){
+									macLogic.atualizarMAC("users", serverSecretKey);
+								}
 							}
 							outStream.writeObject("OK-NEW-USER");
 							//System.out.println("NOVO USER!!!");;
@@ -679,7 +698,9 @@ public class mySharingServer{
 								String wsPath = "AutoWorkspace-" + inputUsername;
 								privateWsFunc.createCifFile(inputUsername, wsPath, ownerCif);
 							}
-							macLogic.atualizarMAC("workspaces", serverSecretKey);
+							if(wantMacWs){
+								macLogic.atualizarMAC("workspaces", serverSecretKey);
+							}
 							autentificado = true;
 							
 						} else {
@@ -730,7 +751,9 @@ public class mySharingServer{
 								String wsPath = "AutoWorkspace-" + inputUsername;
 								privateWsFunc.createCifFile(inputUsername, wsPath, ownerCif);
 							}
-							macLogic.atualizarMAC("workspaces", serverSecretKey);
+							if(wantMacWs){
+								macLogic.atualizarMAC("workspaces", serverSecretKey);
+							}
 							autentificado = true;
 						}
 						username = inputUsername;
@@ -743,7 +766,9 @@ public class mySharingServer{
 					e.printStackTrace();
 				}
 			}
-			macLogic.atualizarMAC("users", serverSecretKey);
+			if(wantMacUser){
+				macLogic.atualizarMAC("users", serverSecretKey);
+			}
 			return autentificado ? "true" : "false";
 		}
 

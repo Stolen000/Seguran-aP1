@@ -112,7 +112,7 @@ public class mySharingClient {
                 }
             }
             if(respostaAutentificacao.equals("OK-NEW-USER")){
-                SecretKey wsKey = (SecretKey) wsPassLogic.createPassKeyLogic2(userInputUser);
+                SecretKey wsKey = (SecretKey) wsPassLogic.createPassKeyLogic(userInputUser);
                 wsPassLogic.keyFileToWs(userInputUser, outputStream, wsKey);
             }
 
@@ -175,7 +175,7 @@ public class mySharingClient {
                                 //executar logica de password key
 
                                             //criar chave secreta com password do ws
-                                SecretKey wsKey = (SecretKey) wsPassLogic.createPassKeyLogic2(arrayDeArgumentos[2]);
+                                SecretKey wsKey = (SecretKey) wsPassLogic.createPassKeyLogic(arrayDeArgumentos[2]);
                                 wsPassLogic.keyFileToWs(username, outputStream, wsKey);
                             }
                         } 
@@ -195,7 +195,7 @@ public class mySharingClient {
                                 if(keyFileData != null){
                                     //recebi a data do file ws.key.owner
                                     //quero dar unwrap com chave privada e sacar a key disso
-                                    SecretKey secretKey = wsPassLogic.decipherWsKey2(username, keyFileData);
+                                    SecretKey secretKey = wsPassLogic.decipherWsKey(username, keyFileData);
                                 
                                     //dar wrap com chave publica do gajo to add
                                     byte[] wrappedData = wsPassLogic.cipherFileLogic(secretKey, arrayDeArgumentos[1]);
@@ -222,7 +222,7 @@ public class mySharingClient {
                             //Declaraçao de vars para a decif
                             FileInputStream fis;
                             
-                            privateFunctions.receiveFile(inputStream, arrayDeArgumentos[1] + ".key." + username , null );
+                            privateFunctions.receiveFile(inputStream, arrayDeArgumentos[1] + ".key." + username , null);
                             File wsKey = new File(arrayDeArgumentos[1] + ".key." + username);
                             System.out.println("Apos receber chave cifrada");
                             //DECIFRA COM A SUA CHAVE PRIVADA
@@ -233,10 +233,11 @@ public class mySharingClient {
                             kstore.load(kfile, "keypass".toCharArray());           //password para aceder à keystore
                             //Certificate cert = kstore.getCertificate("keyrsa");  //alias do utilizador
                             //
+                            System.out.println("ALias:" + username);
                             PrivateKey myPrivateKey = (PrivateKey) kstore.getKey(username, "keypass".toCharArray());
                             //- Iniciar decifracao da chave do WS.
 
-                            Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");//PBEWithHmacSHA256AndAES_128
+                            Cipher c = Cipher.getInstance("AES");//PBEWithHmacSHA256AndAES_128
                             fis = new FileInputStream(arrayDeArgumentos[1] + ".key." + username);
 
                             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -247,20 +248,22 @@ public class mySharingClient {
                                 buffer.write(data, 0, bytesRead);
                             }
                             byte[] wrapedkey = buffer.toByteArray();
-
+                            //decipherWsKey(username,wrapedkey);
                             
                             Cipher desencryptWithPublicKey = Cipher.getInstance("RSA");
                             desencryptWithPublicKey.init(Cipher.UNWRAP_MODE, myPrivateKey);
                            
-                            Key unwrappedKey = desencryptWithPublicKey.unwrap(wrapedkey,"PBEWithHmacSHA256AndAES_128",Cipher.SECRET_KEY);
+                            //Key unwrappedKey = desencryptWithPublicKey.unwrap(wrapedkey,"PBEWithHmacSHA256AndAES_128",Cipher.SECRET_KEY);
+                            Key unwrappedKey = desencryptWithPublicKey.unwrap(wrapedkey,"AES",Cipher.SECRET_KEY);
+
 
                             //--Fechar vars
                             fis.close();
 
                             c.init(Cipher.ENCRYPT_MODE, unwrappedKey);
                             //MUITO MAU MAS PARA TESTAR SIGNATURES, retirar var global after
-                            byte[] params1 = c.getParameters().getEncoded();
-                            params = params1;
+                            //byte[] params1 = c.getParameters().getEncoded();
+                            //params = params1;
                             
 
                             
@@ -268,6 +271,7 @@ public class mySharingClient {
                             //ENVIA ESSES FICHEIROS (CIFRADOS LA DENTRO)
                             System.out.println(uploadFicheiros(inputStream, outputStream, arrayDeArgumentos,c, myPrivateKey, username));
                             wsKey.delete();
+                            kfile.close();
                             doneOperation = true;
                         }    
                         break;    
@@ -358,12 +362,12 @@ public class mySharingClient {
         //- Iniciar decifracao da chave do WS.
 
        
-        Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128"); //PBEWithHmacSHA256AndAES_128
+        Cipher c = Cipher.getInstance("AES"); //PBEWithHmacSHA256AndAES_128
         //byte[] params = c.getParameters().getEncoded();
-        System.out.println(params);
+        //System.out.println(params);
 
-        AlgorithmParameters p = AlgorithmParameters.getInstance("PBEWithHmacSHA256AndAES_128");
-        p.init(params);
+        //AlgorithmParameters p = AlgorithmParameters.getInstance("PBEWithHmacSHA256AndAES_128");
+        //p.init(params);
         
 
         fis = new FileInputStream(keyFile);
@@ -380,7 +384,7 @@ public class mySharingClient {
         Cipher desencryptWithPublicKey = Cipher.getInstance("RSA");
         desencryptWithPublicKey.init(Cipher.UNWRAP_MODE, myPrivateKey);
 
-        Key unwrappedKey =  desencryptWithPublicKey.unwrap(wrapedkey,"PBEWithHmacSHA256AndAES_128",Cipher.SECRET_KEY);
+        Key unwrappedKey =  desencryptWithPublicKey.unwrap(wrapedkey,"AES",Cipher.SECRET_KEY);
         //SecretKey unwrappedKey = wsPassLogic.decipherWsKey(username, wrapedkey);
 
         //--Fechar vars
@@ -388,14 +392,11 @@ public class mySharingClient {
         
 
         try {
-            c.init(Cipher.DECRYPT_MODE, unwrappedKey, p);
+            c.init(Cipher.DECRYPT_MODE, unwrappedKey);
         } catch (InvalidKeyException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-        } catch (InvalidAlgorithmParameterException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }        //Erro? Invalid Key
+        }       //Erro? Invalid Key
         //Percorre todos os ficheiros
         for (int i = 2; i < arrayDeArgumentos.length; i++) {
             //System.out.println(arrayDeArgumentos[i]);
@@ -484,6 +485,7 @@ public class mySharingClient {
             }
             //Nao era valido, passa á frente
         }
+        kfile.close();
         return sBuilder.toString();
     }
 

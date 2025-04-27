@@ -42,7 +42,6 @@ import javax.net.ssl.SSLSocketFactory;
 
 public class mySharingClient {
         
-        static byte[] params;
         public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException, UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException, KeyStoreException, InvalidKeyException, NoSuchPaddingException, SignatureException{
             System.out.println("cliente : main");
             if (args.length < 3){
@@ -175,7 +174,7 @@ public class mySharingClient {
                                 //executar logica de password key
 
                                             //criar chave secreta com password do ws
-                                SecretKey wsKey = (SecretKey) wsPassLogic.createPassKeyLogic(arrayDeArgumentos[2]);
+                                SecretKey wsKey = wsPassLogic.createPassKeyLogic(arrayDeArgumentos[2]);
                                 wsPassLogic.keyFileToWs(username, outputStream, wsKey);
                             }
                         } 
@@ -248,6 +247,7 @@ public class mySharingClient {
                                 buffer.write(data, 0, bytesRead);
                             }
                             byte[] wrapedkey = buffer.toByteArray();
+                            //byte[] wrapedkey = fis.readAllBytes();
                             //decipherWsKey(username,wrapedkey);
                             
                             Cipher desencryptWithPublicKey = Cipher.getInstance("RSA");
@@ -262,8 +262,7 @@ public class mySharingClient {
 
                             c.init(Cipher.ENCRYPT_MODE, unwrappedKey);
                             //MUITO MAU MAS PARA TESTAR SIGNATURES, retirar var global after
-                            //byte[] params1 = c.getParameters().getEncoded();
-                            //params = params1;
+                            //b
                             
 
                             
@@ -363,12 +362,6 @@ public class mySharingClient {
 
        
         Cipher c = Cipher.getInstance("AES"); //PBEWithHmacSHA256AndAES_128
-        //byte[] params = c.getParameters().getEncoded();
-        //System.out.println(params);
-
-        //AlgorithmParameters p = AlgorithmParameters.getInstance("PBEWithHmacSHA256AndAES_128");
-        //p.init(params);
-        
 
         fis = new FileInputStream(keyFile);
         

@@ -19,21 +19,29 @@ public class wsPassLogic {
     
 
     public static SecretKey createPassKeyLogic(String pass){
-		byte[] passSalt = new byte[16]; 
+        byte[] passSalt = new byte[16];
         SecureRandom random = new SecureRandom();
         random.nextBytes(passSalt);
         System.out.println("Salt para passe de server gerado com sucesso.");
-        PBEKeySpec keySpec = new PBEKeySpec(pass.toCharArray(), passSalt, 20);
-        SecretKeyFactory kf;
-        try{
-            kf = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
+
+        try {
+            PBEKeySpec keySpec = new PBEKeySpec(pass.toCharArray(), passSalt, 20, 128);
+            SecretKeyFactory kf = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
             SecretKey key = kf.generateSecret(keySpec);
-            return new SecretKeySpec(key.getEncoded(), "AES");
-        }catch(Exception e){
+
+            byte[] encoded = key.getEncoded();
+
+            // ⚡ Garantes que tens 16 bytes exatamente
+            byte[] finalKey = new byte[16];
+            System.arraycopy(encoded, 0, finalKey, 0, Math.min(encoded.length, 16));
+
+            return new SecretKeySpec(finalKey, "AES");
+
+        } catch(Exception e) {
             System.out.println("Erro a criar key com salt + ws password com PBE");
+            e.printStackTrace();
         }
         return null;
-
     }
     public static Key createPassKeyLogic2(String password) {
         byte[] salt = { (byte) 0xc9, (byte) 0x36, (byte) 0x78, (byte) 0x99, (byte) 0x52, (byte) 0x3e, (byte) 0xea, (byte) 0xf2 };

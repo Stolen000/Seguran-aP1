@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -17,14 +18,17 @@ import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.util.Base64;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
@@ -110,10 +114,30 @@ public class mySharingClient {
 
                 }
             }
-            if(respostaAutentificacao.equals("OK-NEW-USER")){
-                SecretKey wsKey = (SecretKey) wsPassLogic.createPassKeyLogic(userInputUser);
-                wsPassLogic.keyFileToWs(userInputUser, outputStream, wsKey);
+            if (respostaAutentificacao.equals("OK-NEW-USER")) {
+                try {
+                    byte[] salt = new byte[16];
+                    SecureRandom sr = new SecureRandom();
+                    sr.nextBytes(salt);
+
+                    byte[] passwordBytes = userInputPassword.getBytes("UTF-8");
+                    byte[] combined = new byte[passwordBytes.length + salt.length];
+                    System.arraycopy(passwordBytes, 0, combined, 0, passwordBytes.length);
+                    System.arraycopy(salt, 0, combined, passwordBytes.length, salt.length);
+
+                    MessageDigest md = MessageDigest.getInstance("SHA-256");
+                    byte[] hash = md.digest(combined);
+
+                    String hashB64 = Base64.getEncoder().encodeToString(hash);
+                    
+                    SecretKey wsKey = (SecretKey) wsPassLogic.createPassKeyLogic(hashB64);
+                    wsPassLogic.keyFileToWs(userInputUser, outputStream, wsKey);
+
+                } catch (Exception e) {
+                    System.out.println("Internal error during writing in User.txt");
+                }
             }
+
 
             //Assegurar que a resposta do server é correta
             else if(!respostaAutentificacao.equals("OK-USER")){

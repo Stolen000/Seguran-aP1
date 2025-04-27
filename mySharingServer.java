@@ -53,11 +53,10 @@ public class mySharingServer{
 		serverPass = sc.nextLine();
 		serverSecretKey = serverSecretKeyCalc();
 		if(serverSecretKey == null){
-			System.out.println("Aconteceu peta a gerar a secretKey, bazei");
+			System.out.println("Aconteceu algo a gerar a secretKey, bazei");
 			sc.close();
 			return;
 		}
-		System.out.println("Tou com uma secret key mesmo ah maneira!");
 
 		//antes disto verificar se existem os ficheiros users.txt e ws.txt
 		//senao mesmo que user diga que quer criar macs nao tem peta pra criar
@@ -104,7 +103,6 @@ public class mySharingServer{
 			macLogic.autodestruir();
 		}
 
-		System.out.println("Acabei de criar os ficheiros txt e de criar os macs se tiver sido necessario");
 		sc.close();
 		System.out.println("servidor: main");
 		mySharingServer server = new mySharingServer();
@@ -490,7 +488,6 @@ public class mySharingServer{
 											.append(username);
 							String pathWSPassUserEncryptedFinal = pathWSPassUserEncrypted.toString();
 							privateFunctions.sendFile(outStream, pathWSPassUserEncryptedFinal);
-							System.out.println("Apos enviar chave cifrada");
 
 							//Recebe os ficheiros
 							receiveFilesAndRespond(outStream, inStream, arrayDeArgumentos, workspaceUPPath);
@@ -620,8 +617,7 @@ public class mySharingServer{
 						String signFilepath = arrayDeArgumentos[i] + ".signed." + username;
 						boolean removedSigned = privateWsFunc.removeFile(arrayDeArgumentos[1], signFilepath);
 						if(removed && removedSigned){
-							sb.append(arrayDeArgumentos[i] + ": APAGADO");
-							sb.append(signFilepath + ": APAGADO");
+							sb.append(arrayDeArgumentos[i] + " e " + signFilepath + " : APAGADOS");
 						}
 						else{
 							sb.append("O ficheiro " + arrayDeArgumentos[i] + " nao existe no workspace indicado");
@@ -697,7 +693,6 @@ public class mySharingServer{
 							byte[] ownerCif = privateFunctions.receiveBytes(inStream);
 							if(ownerCif != null){
 								//criar ent o file
-								System.out.println("entrei dentro do if no server authentication a criar para o ws automatico");
 								String wsPath = "AutoWorkspace-" + inputUsername;
 								privateWsFunc.createCifFile(inputUsername, wsPath, ownerCif);
 							}
@@ -750,7 +745,6 @@ public class mySharingServer{
 							byte[] ownerCif = privateFunctions.receiveBytes(inStream);
 							if(ownerCif != null){
 								//criar ent o file
-								System.out.println("entrei dentro do if no server authentication a criar para o ws automatico");
 								String wsPath = "AutoWorkspace-" + inputUsername;
 								privateWsFunc.createCifFile(inputUsername, wsPath, ownerCif);
 							}
@@ -803,35 +797,28 @@ public class mySharingServer{
 		}
 
 		private void addNewUser(String username, String password, FileWriter fw) {
-			// Gerar salt aleatório de 16 bytes
 			byte[] salt = new byte[16];
 			SecureRandom sr = new SecureRandom();
 			sr.nextBytes(salt);
 
 			try {
-				// Combinar password + salt
 				byte[] passwordBytes = password.getBytes("UTF-8");
 				byte[] combined = new byte[passwordBytes.length + salt.length];
 				System.arraycopy(passwordBytes, 0, combined, 0, passwordBytes.length);
 				System.arraycopy(salt, 0, combined, passwordBytes.length, salt.length);
 
-				// Calcular o hash com SHA-256
 				MessageDigest md = MessageDigest.getInstance("SHA-256");
 				byte[] hash = md.digest(combined);
 
-				// Codificar hash e salt em Base64 para texto legível
 				String hashB64 = Base64.getEncoder().encodeToString(hash);
 				String saltB64 = Base64.getEncoder().encodeToString(salt);
 
-				// Escrever para o ficheiro no formato desejado
-				//FileWriter fw = new FileWriter("users.txt", true); // append
+
 				fw.write(username + ":" + hashB64 + ":" + saltB64 + "\n");
 				fw.close();
 			} catch (Exception e) {
 				System.out.println("Internal error during writing in User.txt");
 			}
-
-
 		}
 
 		//Encontra user no ficheiro user.txt

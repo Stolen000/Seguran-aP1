@@ -55,15 +55,6 @@ public class mySharingClient {
             System.setProperty("javax.net.ssl.trustStore", "truststore.client");
             System.setProperty("javax.net.ssl.trustStorePassword", "keypass"); 
             Scanner sc = new Scanner(System.in);
-    
-            /* 
-            FileInputStream kfile = new FileInputStream("clientKeys");  //keystore ## Tou a usar a cllientkeys nao sabendo se temos que usar a truststore
-            KeyStore kstore = KeyStore.getInstance("JCEKS");
-            kstore.load(kfile, "keypass".toCharArray());           //password para aceder à keystore
-            Certificate cert = kstore.getCertificate("keyrsa");  //alias do utilizador
-            //
-            Key myPrivateKey = kstore.getKey("keyrsa", "keypass".toCharArray());
-            */
 
             //Recebe os argumentos e guarda o ServerAdress para dar connect, o Porto, o User e a Pass
             String inputs[] = mySharingClient.verifyInput(args, sc);
@@ -72,7 +63,6 @@ public class mySharingClient {
             SocketFactory sf = SSLSocketFactory.getDefault();
             SSLSocket clientSocket = (SSLSocket) sf.createSocket(inputs[0], Integer.parseInt(inputs[1]));
     
-            //Socket clientSocket = new Socket(inputs[0], Integer.parseInt(inputs[1]));
     
             ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
     
@@ -80,7 +70,6 @@ public class mySharingClient {
             createHookShutdown(inputStream, outputStream, clientSocket);
 
             if(mySharingClient.startAuthentication(inputStream, outputStream, inputs[2], inputs[3], sc)){
-                //Pode haver erros com o input[2]   !!!
                 mySharingClient.runClient(inputStream, outputStream, clientSocket, sc, inputs[2]);
 
             }
@@ -110,7 +99,6 @@ public class mySharingClient {
                     String[] credentials = getValidCredentials(scanner);
                     userInputUser = credentials[0];
                     userInputPassword = credentials[1];
-                    //System.out.println("\nVoce digitou: " + userInputUser + "\n" + userInputPassword);
 
                 }
             }
@@ -129,7 +117,7 @@ public class mySharingClient {
                     byte[] hash = md.digest(combined);
 
                     String hashB64 = Base64.getEncoder().encodeToString(hash);
-                    
+
                     SecretKey wsKey = (SecretKey) wsPassLogic.createPassKeyLogic(hashB64);
                     wsPassLogic.keyFileToWs(userInputUser, outputStream, wsKey);
 
@@ -145,7 +133,7 @@ public class mySharingClient {
             }        
 
         } catch (Exception e){
-            //System.out.println(e.getMessage());
+            System.out.println(e.getMessage());
             return false;
         } 
         return true;
@@ -163,14 +151,12 @@ public class mySharingClient {
 
         printMenuDeOperacoes();
         //Loop das operações
-        
 
         try{
             while (true) {
                 //Menu das operacoes
             
                 //------------------v Input do comando do user
-                //inputDoUser = new String("CREATE workspace004");
 
                 boolean doneOperation = false;
                 System.out.print("Comando: ");
@@ -180,16 +166,11 @@ public class mySharingClient {
                 }
                 inputDoUser = sc.nextLine();
                 System.out.println();
-                //In progress:Tratar input
                 arrayDeArgumentos = inputDoUser.trim().split("\s+");
                 comando = arrayDeArgumentos[0];
 
                 switch (comando) {
                     //CREATE <ws> <password>
-                    //preciso de acessar username de user 
-                    //precisar de criar o salt, ficheiro cifrado com chave publica do owner
-                    //enviar para o servidor
-                    //fazer isso depois da resposta OK do server
                     case "CREATE":
                         if(arrayDeArgumentos.length == 3){
                             String result = sendAndReceive(inputStream, outputStream, inputDoUser);
@@ -197,18 +178,15 @@ public class mySharingClient {
                             if(result.equals("OK")){
                                 //executar logica de password key
 
-                                            //criar chave secreta com password do ws
+                                //criar chave secreta com password do ws
                                 SecretKey wsKey = wsPassLogic.createPassKeyLogic(arrayDeArgumentos[2]);
                                 wsPassLogic.keyFileToWs(username, outputStream, wsKey);
                             }
                         } 
                     break;
-                        //se nao entrar no if ele cai no default
 
                     //ADD <user1> <ws>
                     case "ADD":
-                    //apos receber o ok logica das passes
-                        //precisa de mais tramento? (?)
                         if(arrayDeArgumentos.length == 3){
                             String result = sendAndReceive(inputStream, outputStream, inputDoUser);
                             doneOperation = true;
@@ -216,13 +194,10 @@ public class mySharingClient {
                             if(result.equals("OK")){
                                 byte[] keyFileData = privateFunctions.receiveBytes(inputStream);
                                 if(keyFileData != null){
-                                    //recebi a data do file ws.key.owner
-                                    //quero dar unwrap com chave privada e sacar a key disso
+
                                     SecretKey secretKey = wsPassLogic.decipherWsKey(username, keyFileData);
                                 
-                                    //dar wrap com chave publica do gajo to add
                                     byte[] wrappedData = wsPassLogic.cipherFileLogic(secretKey, arrayDeArgumentos[1]);
-                                    //voltar a enviar estes bytes e o server receber e criar o file
                                     privateFunctions.sendBytes(outputStream, wrappedData);
                                 }
 
@@ -241,26 +216,21 @@ public class mySharingClient {
                                 System.out.println("Resposta: " + respostaDoServer + System.lineSeparator());
                                 break;
                             } 
-                            //RECEBE A PASS DO WS ENCRYPTADA COM A SUA CHAVE PUBLICA
-                            //Declaraçao de vars para a decif
                             FileInputStream fis;
                             
                             privateFunctions.receiveFile(inputStream, arrayDeArgumentos[1] + ".key." + username , null);
                             File wsKey = new File(arrayDeArgumentos[1] + ".key." + username);
                             System.out.println("Apos receber chave cifrada");
-                            //DECIFRA COM A SUA CHAVE PRIVADA
-                            //-Ir buscar a sua chave privada do seu certificado/truststore
-                            //
-                            FileInputStream kfile = new FileInputStream("clientKeys");  //keystore ## Tou a usar a cllientkeys nao sabendo se temos que usar a truststore
+
+                            FileInputStream kfile = new FileInputStream("clientKeys");  
                             KeyStore kstore = KeyStore.getInstance("JCEKS");
-                            kstore.load(kfile, "keypass".toCharArray());           //password para aceder à keystore
-                            //Certificate cert = kstore.getCertificate("keyrsa");  //alias do utilizador
-                            //
+                            kstore.load(kfile, "keypass".toCharArray());           
+
                             System.out.println("ALias:" + username);
                             PrivateKey myPrivateKey = (PrivateKey) kstore.getKey(username, "keypass".toCharArray());
                             //- Iniciar decifracao da chave do WS.
 
-                            Cipher c = Cipher.getInstance("AES");//PBEWithHmacSHA256AndAES_128
+                            Cipher c = Cipher.getInstance("AES");
                             fis = new FileInputStream(arrayDeArgumentos[1] + ".key." + username);
 
                             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -271,13 +241,11 @@ public class mySharingClient {
                                 buffer.write(data, 0, bytesRead);
                             }
                             byte[] wrapedkey = buffer.toByteArray();
-                            //byte[] wrapedkey = fis.readAllBytes();
-                            //decipherWsKey(username,wrapedkey);
+
                             
                             Cipher desencryptWithPublicKey = Cipher.getInstance("RSA");
                             desencryptWithPublicKey.init(Cipher.UNWRAP_MODE, myPrivateKey);
                            
-                            //Key unwrappedKey = desencryptWithPublicKey.unwrap(wrapedkey,"PBEWithHmacSHA256AndAES_128",Cipher.SECRET_KEY);
                             Key unwrappedKey = desencryptWithPublicKey.unwrap(wrapedkey,"AES",Cipher.SECRET_KEY);
 
 
@@ -285,11 +253,7 @@ public class mySharingClient {
                             fis.close();
 
                             c.init(Cipher.ENCRYPT_MODE, unwrappedKey);
-                            //MUITO MAU MAS PARA TESTAR SIGNATURES, retirar var global after
-                            //b
-                            
 
-                            
                             //CIFRA OS FICHEIROS COM A CHAVE DO WS
                             //ENVIA ESSES FICHEIROS (CIFRADOS LA DENTRO)
                             System.out.println(uploadFicheiros(inputStream, outputStream, arrayDeArgumentos,c, myPrivateKey, username));
@@ -315,9 +279,7 @@ public class mySharingClient {
 
                             //Preparar para receber
                             System.out.println(downloadFicheiros(inputStream,outputStream,arrayDeArgumentos, username)); 
-                            //Recebeu os files encriptados + a chave encriptada do WS.
-                            //Opcoes : Desencriptar e substituir aqui, ou quando se recebe ja. recebendo primeiro o passWS
-                            
+
                             wsKey.delete();
                             doneOperation = true;
                         }
@@ -339,11 +301,9 @@ public class mySharingClient {
                             sendAndReceive(inputStream, outputStream, inputDoUser);
                             doneOperation = true;
                         }
-                        //mandar msg de erro?
-                        //So n das break fora do if para ele ir pro default e printar o menu
+
                         break;
                     default:
-                        //N faz nada
                         break;
                 }
                 if(!doneOperation){
@@ -364,28 +324,24 @@ public class mySharingClient {
         String dirAtual = System.getProperty("user.dir");
         StringBuilder sBuilder = new StringBuilder("Resposta: ");
         
-        //Recebe o passWS encriptado
-        //Declaraçao de vars para a decif
+
         FileInputStream fis;
         FileOutputStream fos;
         CipherInputStream cis;
         privateFunctions.receiveFile(inputStream, arrayDeArgumentos[1] + ".key." + username , null); 
               
-        //Desencripta
-        //DECIFRA COM A SUA CHAVE PRIVADA
-        //-Ir buscar a sua chave privada do seu certificado/truststore
-        //
-        FileInputStream kfile = new FileInputStream("clientKeys");  //keystore ## Tou a usar a cllientkeys nao sabendo se temos que usar a truststore
+
+        FileInputStream kfile = new FileInputStream("clientKeys");  
         KeyStore kstore = KeyStore.getInstance("JCEKS");
-        kstore.load(kfile, "keypass".toCharArray());           //password para aceder à keystore
-        Certificate cert = kstore.getCertificate(username);  //alias do utilizador
+        kstore.load(kfile, "keypass".toCharArray());          
+        Certificate cert = kstore.getCertificate(username); 
         //
         Key myPrivateKey = kstore.getKey(username, "keypass".toCharArray());
         File keyFile = new File(arrayDeArgumentos[1] + ".key." + username);
         //- Iniciar decifracao da chave do WS.
 
        
-        Cipher c = Cipher.getInstance("AES"); //PBEWithHmacSHA256AndAES_128
+        Cipher c = Cipher.getInstance("AES"); 
 
         fis = new FileInputStream(keyFile);
         
@@ -402,7 +358,6 @@ public class mySharingClient {
         desencryptWithPublicKey.init(Cipher.UNWRAP_MODE, myPrivateKey);
 
         Key unwrappedKey =  desencryptWithPublicKey.unwrap(wrapedkey,"AES",Cipher.SECRET_KEY);
-        //SecretKey unwrappedKey = wsPassLogic.decipherWsKey(username, wrapedkey);
 
         //--Fechar vars
         fis.close();
@@ -416,17 +371,11 @@ public class mySharingClient {
         }       //Erro? Invalid Key
         //Percorre todos os ficheiros
         for (int i = 2; i < arrayDeArgumentos.length; i++) {
-            //System.out.println(arrayDeArgumentos[i]);
 
-            //mete no strbuilder o path atual
             sBuilder.append(arrayDeArgumentos[i]).append(": ");
-            //fica á espera do path para saber se existe no ws
             filePathAtual = (String) inputStream.readObject();
             if(!filePathAtual.equals("-1")){
-                //eh valido (existe no server)
-                //Pasta atual
                 
-                //checka se já existe na sua dir
                 isFileNewInThisDir = !privateFunctions.isFileInWorkspace(filePathAtual, dirAtual);
                 
                 outputStream.writeObject(isFileNewInThisDir);
@@ -434,18 +383,15 @@ public class mySharingClient {
                    
                     privateFunctions.receiveFile(inputStream, filePathAtual, null);
 
-                    //Apanha o sign nome + asserio
                     String signName = new String(privateFunctions.receiveBytes(inputStream), StandardCharsets.UTF_8);
                     String[] parts = signName.split("\\\\");
                     signName = parts[2];
                     byte signature[] = privateFunctions.receiveBytes(inputStream);
                     
                     //Ir buscar a public key do sign
-                    //Deve dar o user que deu sign
                     String aliasSigned = signName.split(filePathAtual+".signed.")[1]; 
                     Certificate certificate = kstore.getCertificate(aliasSigned);
                     PublicKey pk = certificate.getPublicKey();
-                    //Signature file handling
                    
                     Signature s = Signature.getInstance("MD5withRSA");
                     s.initVerify(pk);
@@ -492,15 +438,12 @@ public class mySharingClient {
                     }
                     
                 } else {
-                    //Maybe perguntar se ele quer dar override ou cancelar o download para esse ficheiro.
                     sBuilder.append("Existe um ficheiro com o mesmo nome na diretoria\n"); 
                 }
-                //Nao deveria ter que mandar resposta
-                //outputStream.writeObject(stringDeResposta);
+
             } else {
                 sBuilder.append("Nao existe no WS\n");
             }
-            //Nao era valido, passa á frente
         }
         kfile.close();
         return sBuilder.toString();
@@ -542,9 +485,6 @@ public class mySharingClient {
                 /////////////
                 readBool = (boolean) inputStream.readObject();
                 if(readBool){
-                    //Validou entao envia ficheiro
-                    //File tempFile = new File(pathFicheiroAtual + ".enc"); ??
-                    //Cifrar?
 
                     //Sign dos dados
                     byte[] bufFicheiroAtual = Files.readAllBytes(ficheiroAtual.toPath());
@@ -561,7 +501,6 @@ public class mySharingClient {
                         cos.write(b, 0, j);
                         j = fis.read(b);
                     }
-                    //cos.write(s.sign()); //Maybe works like this
                     fosSig.write(s.sign());
                     
                     cos.close();
@@ -570,7 +509,6 @@ public class mySharingClient {
                     fosSig.close();
 
                     privateFunctions.sendFile(outputStream, pathFicheiroAtual + ".enc");
-                    //manda a signature á parte, pode ou n ser necessario tirar de la
                     privateFunctions.sendFile(outputStream, pathFicheiroAtual + ".signed." + username);
 
                     //Delete on client side
@@ -604,9 +542,7 @@ public class mySharingClient {
         System.out.println(sb.toString());
     }
 
-    //alterei esta funçao para retornar resposta de server
-    //comandos que nao necessitam de trabalhar resultado nao sao afetadas
-    //comandos que necessitam passam a saber resposta do servidor
+
     private static String sendAndReceive(ObjectInputStream inputStream, ObjectOutputStream outputStream, String inputDoUser)
             throws IOException, ClassNotFoundException {
         String respostaDoServidor;

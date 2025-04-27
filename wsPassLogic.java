@@ -31,7 +31,6 @@ public class wsPassLogic {
 
             byte[] encoded = key.getEncoded();
 
-            // ⚡ Garantes que tens 16 bytes exatamente
             byte[] finalKey = new byte[16];
             System.arraycopy(encoded, 0, finalKey, 0, Math.min(encoded.length, 16));
 
@@ -45,7 +44,7 @@ public class wsPassLogic {
     }
     public static Key createPassKeyLogic2(String password) {
         byte[] salt = { (byte) 0xc9, (byte) 0x36, (byte) 0x78, (byte) 0x99, (byte) 0x52, (byte) 0x3e, (byte) 0xea, (byte) 0xf2 };
-        PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, 20); // pass, salt, iterations
+        PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, 20);
         SecretKeyFactory kf;
         try {
             kf = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");

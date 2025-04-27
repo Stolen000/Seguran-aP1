@@ -617,8 +617,11 @@ public class mySharingServer{
 				if(userWs.contains(arrayDeArgumentos[1])){
 					for(int i = 2; i < arrayDeArgumentos.length; i++){
 						boolean removed = privateWsFunc.removeFile(arrayDeArgumentos[1], arrayDeArgumentos[i]);
-						if(removed){
+						String signFilepath = arrayDeArgumentos[i] + ".signed." + username;
+						boolean removedSigned = privateWsFunc.removeFile(arrayDeArgumentos[1], signFilepath);
+						if(removed && removedSigned){
 							sb.append(arrayDeArgumentos[i] + ": APAGADO");
+							sb.append(signFilepath + ": APAGADO");
 						}
 						else{
 							sb.append("O ficheiro " + arrayDeArgumentos[i] + " nao existe no workspace indicado");

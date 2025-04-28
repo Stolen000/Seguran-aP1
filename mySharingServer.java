@@ -363,7 +363,6 @@ public class mySharingServer{
 									outStream.writeObject("NOK");
 									break;
 								} else if(arrayDeArgumentos[1].startsWith("AutoWorkspace-")){
-									//System.out.println("Nao podes criar workspaces com nome generico");
 									outStream.writeObject("NOK");
 									break;
 								}
@@ -879,9 +878,7 @@ public class mySharingServer{
 						//Validou entao envia ficheiro
 						privateFunctions.sendFile(outputStream, pathFicheiroAtual);
 						for (File file : fileArray) {
-							System.out.println(file.toPath().toString());
 							if(file.toString().contains(arrayDeArgumentos[i] + ".signed.")){
-								System.out.println("Encontrou este: " + file.toString());
 								pathSigntualSb = new StringBuilder();
 								pathSigntualSb.append("workspacesFolder")
 												.append(File.separator)

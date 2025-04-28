@@ -33,7 +33,6 @@ public class wsPassLogic {
 
             byte[] encoded = key.getEncoded();
 
-            // ⚡ Garantes que tens 16 bytes exatamente
             byte[] finalKey = new byte[16];
             System.arraycopy(encoded, 0, finalKey, 0, Math.min(encoded.length, 16));
 

@@ -5,7 +5,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -83,7 +82,7 @@ public class privateFunctions {
 
 		//Se workspace for null ele mete so na pasta em que esta
 		if(workspace != null){
-			File workspaceFolder = new File("workspacesFolder" + File.separator + workspace);
+			//File workspaceFolder = new File("workspacesFolder" + File.separator + workspace);
 			
 			pathname = "workspacesFolder" + File.separator + workspace + File.separator + pathname;
 		} 

@@ -211,11 +211,6 @@ public class macLogic {
 
         public static void atualizarMAC(String filename, Key key) {
             try {
-                //acabei de atualziar o MAC
-                //estava assim
-                //e agr estah assim
-
-
                 String novoMacBase64 = calcularMACBase64(filename, key);
 
                 if (novoMacBase64 != null) {

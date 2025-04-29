@@ -1,0 +1,26 @@
+leiam para fazerem ai na tp,
+estao ai os jars que criei mas eu quero que tentem criar denovo para ver se tb conseguem
+estah ai um ficheiro
+build.sh
+ele vai eliminar os jars e criar novos
+corram no vs code com os comandos
+
+chmod +x build.sh
+
+e de seguida
+
+./build.sh
+
+podem abrir o ficheiro e ver o que faz...
+
+correr os ficheiros eh 
+
+java -jar mySharingServer.jar
+
+java -jar mySharingClient.jar <ip ou localhost...> <user...> <pass do user...>
+
+
+as keystores teem de estar organizadas nos sitios certos para funcionar nao se esqueçam
+eu pus ah parte na pasta das keystores(como estava ja antes), coloquem tudo no sitio ou ent tirem tudo daqui do folder java files pra fora
+beijo no rabo(quando virem isto vou ainda estar a dormir kkk)
+espero que tenha feito algo de jeito para compensar nao tar aí a sofrer com vcs<3

@@ -144,12 +144,17 @@ public class privateFunctions {
 
 
 	private static boolean isFileInWorkspacePriv(String filePathName, String workspacePath) {
-		File worskspaceFile = new File("workspacesFolder" + File.separator + workspacePath);
-		String[] filesInWs = worskspaceFile.list();
-		if(filesInWs != null && Arrays.asList(filesInWs).contains(filePathName)){
-			return true;
+		String dirAtual = "";
+		File worskspaceFile;
+		String[] filesInWs;
+		if(workspacePath == null){
+			dirAtual = System.getProperty("user.dir");
+			worskspaceFile = new File(dirAtual);
+		} else {
+			worskspaceFile = new File("workspacesFolder" + File.separator + workspacePath);
 		}
-		return false;
+		filesInWs = worskspaceFile.list();
+		return filesInWs != null && Arrays.asList(filesInWs).contains(filePathName);
 	}
 
 	public static String formatMsg(String[] lista){

@@ -7,6 +7,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Key;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -583,9 +585,18 @@ public class mySharingServer{
 						File [] wsFiles = new File("workspacesFolder" + File.separator + arrayDeArgumentos[1]).listFiles();
 
 						for(File file : wsFiles){
-							System.out.println(file.toString());
+							System.out.println(file.toString() + "||");							
 							if(file.toString().contains(arrayDeArgumentos[i] + ".signed.")){
-								signFilepath = file.toString().split(File.separator)[2];
+								Path path = Paths.get(file.toString());
+								String signName = path.getFileName().toString();
+								System.out.println(signName);
+								/* for (String iterable_element : file.toString().split(File.separator)) {
+									System.out.println(iterable_element);
+									System.out.print("|");
+								} */
+                    			//signName = path.getFileName().toString();
+								//signFilepath = file.toString().split(File.separator)[2];
+								signFilepath = signName;
 							}
 						}
 						boolean removedSigned = privateWsFunc.removeFile(arrayDeArgumentos[1], signFilepath);

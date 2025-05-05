@@ -1,0 +1,31 @@
+SegC-028
+
+Para compilar:
+chmod +x build.sh
+
+e de seguida
+
+./build.sh
+
+correr os ficheiros eh 
+
+java -jar mySharingServer.jar
+
+java -jar mySharingClient.jar <ip ou localhost...> <user...> <pass do user...>
+
+
+Limitações:
+-O servidor não é case sensitive. Uma vez que escrevemos código em Windows, percebemos que os diretórios não são case sensitive. 
+Por essa razão não era possível criar as seguintes workspaces: "workspaceManel" e "workspacemanel". 
+Assim, apenas aceitamos usernames com um conjunto de caracteres únicos e alfanuméricos. 
+No entanto, tomámos as devidas precauções para prevenir autenticações com usernames diferentes. 
+Ou seja, ao tentar autenticar-se, o Manel deve introduzir o seu username como "manel", 
+dado que qualquer outra variante como "Manel" ou "MANEL" será verificada como errada.
+
+Os nomes das keystores que contêm os certificados e chaves privadas dos seus respetivos users são keystore.<user> :
+-server
+-user1
+-user2
+-user3
+
+A trustore "truststore.client" contem todos os certificados.

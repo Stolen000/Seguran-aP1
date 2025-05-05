@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -133,10 +134,14 @@ public class privateWsFunc {
 				if (!workspaceFile.exists()) {
 					workspaceFile.createNewFile();
 				}
-
+				if(!mySharingServer.verifyFileMac("workspaces")){
+					System.out.println("No autentication ficheiro MAC user estava corrompido");
+					System.out.println("Tenho pena mas vou fechar");
+					System.exit(1); 
+				}
 				sb.append("AutoWorkspace-").append(username);
 				escreveLinhaNovaDoWsFile(sb.toString(),username);
-				
+                
 			}catch(IOException e){
 				e.printStackTrace();
 			}
@@ -159,6 +164,7 @@ public class privateWsFunc {
     
     
         public static void escreveLinhaNovaDoWsFile(String workspaceName, String user) throws IOException{
+            
             File wsfile = new File("workspaces.txt");
             //nao devia ser criada aqui, mas so para assegurar
             File wsPath = new File("workspacesFolder" + File.separator + workspaceName);
@@ -173,5 +179,18 @@ public class privateWsFunc {
                 writer.write(strBldr.toString());
             }
         }
+
+        public static void createCifFile(String username, String ws, byte[] data) throws IOException {
+            String filename = "workspacesFolder" + File.separator + ws + File.separator + ws + ".key." + username;
+            File file = new File(filename);
+            if(!file.exists()){
+                file.createNewFile();
+            }
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                fos.write(data);
+                fos.flush();
+            }
+        }
+
 
 }

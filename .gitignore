@@ -1,1 +1,19 @@
+# Ignorar ficheiros temporários e de sistema
 .DS_Store
+
+# Ignorar ficheiros compilados Java
+*.class
+
+# Ignorar ficheiros .jar
+*.jar
+
+# Ignorar ficheiros de texto
+*.txt
+
+# Ignorar keystores e certificados (opcional)
+*.cer
+*.server
+
+
+*.mac
+*.bin
